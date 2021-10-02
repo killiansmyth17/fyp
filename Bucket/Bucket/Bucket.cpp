@@ -1,12 +1,10 @@
 #include <iostream>
+#include <chrono>
 #include <thread>
 #include <mutex>
 
 double water = 0;
 
-//tick system variables
-int threadCount = 2;
-int threadCounter = 0;
 int tick = 0;
 
 std::mutex mutex;
@@ -15,68 +13,60 @@ void changeWater(double waterTick) {
 	mutex.lock();
 
 	water += waterTick;
+	std::cout << water << " litres of water in the bucket\n" << std::endl;
 
 	mutex.unlock();
 }
 
-void waitForTick(int currentTick) {
-	mutex.lock();
-
-	threadCounter++;
-
-	if (threadCounter == threadCount) {
-		std::cout << "Advanced to tick " << tick << std::endl;
-		std::cout << water << " litres of water are in the bucket\n" << std::endl;
-		tick++; //advancing tick outside of cout (i.e. no ++tick) because it immediately frees up threads and messes up print order otherwise
-		threadCounter = 0;
-	}
-
-	mutex.unlock();
-
-	while (currentTick == tick) {
-		//do nothing
-	}
+void suspendThread(int milliseconds) {
+	std::chrono::milliseconds timespan(milliseconds);
+	std::this_thread::sleep_for(timespan);
 }
 
 void fillBucket(void) {
 	double waterRate = 1.0;
+	int waterTime = 30; //fill every 30 ticks * 100 milliseconds
+	int lastAction = 0;
 
-	//while(true) {
-	for(int i = 0; i<100; i++) {
+	while(true) {
+		suspendThread(20);
+		if ((tick - lastAction) > waterTime) {
+			lastAction += waterTime;
 
-		int currentTick = tick;
-		double waterTick = 0;
-		waterTick += waterRate;
-
-		std::cout << "Filling" << std::endl;
-
-		changeWater(waterTick);
-		waitForTick(currentTick);
+			changeWater(waterRate);
+		}
 	}
 }
 
 void emptyBucket(void) {
 	double waterRate = -0.5;
+	int waterTime = 50; //empty every 50 ticks * 100 milliseconds
+	int lastAction = 0;
 
-	//while(true) {
-	for(int i = 0; i<100; i++) {
+	while(true) {
+		suspendThread(20);
+		if ((tick - lastAction) > waterTime) {
+			lastAction += waterTime;
 
-		int currentTick = tick;
-		double waterTick = 0;
-		waterTick += waterRate;
+			changeWater(waterRate);
+		}
+	}
+}
 
-		std::cout << "Emptying" << std::endl;
-
-		changeWater(waterTick);
-		waitForTick(currentTick);
+void timer(void) {
+	while (true) {
+		suspendThread(100);
+		tick++;
 	}
 }
 
 int main()
 {
+	std::thread timeThread(timer);
 	std::thread fillThread(fillBucket);
 	std::thread emptyThread(emptyBucket);
 
+	timeThread.join();
 	fillThread.join();
 	emptyThread.join();
 
