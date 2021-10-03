@@ -25,13 +25,13 @@ void suspendThread(int milliseconds) {
 
 void fillBucket(void) {
 	double waterRate = 1.0;
-	int waterTime = 30; //fill every 30 ticks * 100 milliseconds
+	int waterInterval = 30; //fill every 30 ticks * 100 milliseconds
 	int lastAction = 0;
 
 	while(true) {
 		suspendThread(20);
-		if ((tick - lastAction) > waterTime) {
-			lastAction += waterTime;
+		if ((tick - lastAction) > waterInterval) {
+			lastAction += waterInterval;
 
 			changeWater(waterRate);
 		}
@@ -40,13 +40,13 @@ void fillBucket(void) {
 
 void emptyBucket(void) {
 	double waterRate = -0.5;
-	int waterTime = 50; //empty every 50 ticks * 100 milliseconds
+	int waterInterval = 50; //empty every 50 ticks * 100 milliseconds
 	int lastAction = 0;
 
 	while(true) {
 		suspendThread(20);
-		if ((tick - lastAction) > waterTime) {
-			lastAction += waterTime;
+		if ((tick - lastAction) > waterInterval) {
+			lastAction += waterInterval;
 
 			changeWater(waterRate);
 		}
