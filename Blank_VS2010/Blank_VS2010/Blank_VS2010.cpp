@@ -12,10 +12,18 @@ int main(array<System::String ^> ^args)
 	Application::EnableVisualStyles();
 	Application::SetCompatibleTextRenderingDefault(false); 
 
-	// Create the main window and run it
-	Application::Run(gcnew Form1());
+	// Kick off threads
+	std::thread timeThread(timer);
+	std::thread fillThread(fillBucket);
+	std::thread emptyThread(emptyBucket);
 
-	bucketMain();
+	timeThread.detach();
+	fillThread.detach();
+	emptyThread.detach();
+
+	// Create the main window and run it
+
+	Application::Run(gcnew Form1());
 
 	return 0;
 }

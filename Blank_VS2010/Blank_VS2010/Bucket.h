@@ -4,9 +4,13 @@
 #include <thread>
 #include <mutex>
 
-int bucketMain();
-//void timer();
-//void emptyBucket();
-//void fillBucket();
-//void suspendThread();
-//void changeWater();
+//namespace bkt {
+	//variables
+	extern int tick;
+	extern double water;
+
+	//functions
+	void timer();
+	void emptyBucket();
+	void fillBucket();
+//}

@@ -8,16 +8,15 @@
 double water = 0;
 
 int tick = 0;
-
-std::mutex mutex;
+//std::mutex mutex;
 
 void changeWater(double waterTick) {
-	mutex.lock();
+	//mutex.lock();
 
 	water += waterTick;
 	std::cout << water << " litres of water in the bucket\n" << std::endl;
 
-	mutex.unlock();
+	//mutex.unlock();
 }
 
 void suspendThread(int milliseconds) {
@@ -60,17 +59,4 @@ void timer(void) {
 		suspendThread(100);
 		tick++;
 	}
-}
-
-int bucketMain()
-{
-	std::thread timeThread(timer);
-	std::thread fillThread(fillBucket);
-	std::thread emptyThread(emptyBucket);
-
-	timeThread.join();
-	fillThread.join();
-	emptyThread.join();
-
-	return 1;
 }
