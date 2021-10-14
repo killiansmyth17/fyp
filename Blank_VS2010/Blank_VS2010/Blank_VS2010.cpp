@@ -12,14 +12,21 @@ int main(array<System::String ^> ^args)
 	Application::EnableVisualStyles();
 	Application::SetCompatibleTextRenderingDefault(false); 
 
-	// Kick off threads
-	std::thread timeThread(timer);
-	std::thread fillThread(fillBucket);
-	std::thread emptyThread(emptyBucket);
+	std::thread emptyThreads[20];
+	std::thread fillThreads[20];
 
+	// Create & kick off threads
+	for (int i = 0; i < 10; i++) {
+		fillThreads[i] = std::thread(fillBucket);
+		emptyThreads[i] = std::thread(emptyBucket);
+
+		fillThreads[i].detach();
+		emptyThreads[i].detach();
+	}
+
+	// Set up timer thread last, kicks off whole process
+	std::thread timeThread(timer);
 	timeThread.detach();
-	fillThread.detach();
-	emptyThread.detach();
 
 	// Create the main window and run it
 
