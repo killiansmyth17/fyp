@@ -2,56 +2,59 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+
+#include <unordered_map>
+#include <string>
+
 #include "stdafx.h"
 #include "Bucket.h"
 
 double water = 0;
 
 int tick = 0;
-//std::mutex mutex;
+//std::mutex waterMutex;
 
+
+
+///////////////////////////////////
+////// MUTEX FUNCTIONS BEGIN //////
+///////////////////////////////////
 void changeWater(double waterTick) {
-	//mutex.lock();
+	//waterMutex.lock();
 
 	water += waterTick;
 	std::cout << water << " litres of water in the bucket\n" << std::endl;
 
-	//mutex.unlock();
+	//waterMutex.unlock();
+}
+/////////////////////////////////
+////// MUTEX FUNCTIONS END //////
+/////////////////////////////////
+
+
+
+//////////////////////////////////////////
+////// AGENT ACTION FUNCTIONS BEGIN //////
+//////////////////////////////////////////
+void fillBucket(int intervals) {
+	changeWater(intervals * 1);
 }
 
+void emptyBucket(int intervals) {
+	changeWater(intervals * -1);
+}
+////////////////////////////////////////
+////// AGENT ACTION FUNCTIONS END //////
+////////////////////////////////////////
+
+
+
+////////////////////////////////////////////
+////// GENERAL THREAD FUNCTIONS BEGIN //////
+////////////////////////////////////////////
 void suspendThread(int milliseconds) {
 	std::chrono::milliseconds timespan(milliseconds);
 	std::this_thread::sleep_for(timespan);
-}
-
-void fillBucket(void) {
-	double waterRate = 1.0;
-	int waterInterval = 30; //fill every 30 ticks * 100 milliseconds
-	int lastAction = 0;
-
-	while (true) {
-		suspendThread(20);
-		if ((tick - lastAction) > waterInterval) {
-			lastAction += waterInterval;
-
-			changeWater(waterRate);
-		}
-	}
-}
-
-void emptyBucket(void) {
-	double waterRate = -0.5;
-	int waterInterval = 50; //empty every 50 ticks * 100 milliseconds
-	int lastAction = 0;
-
-	while (true) {
-		suspendThread(20);
-		if ((tick - lastAction) > waterInterval) {
-			lastAction += waterInterval;
-
-			changeWater(waterRate);
-		}
-	}
 }
 
 void timer(void) {
@@ -60,3 +63,38 @@ void timer(void) {
 		tick++;
 	}
 }
+
+//Check if enough time has passed for action to happen
+int checkInterval(void (*callback)(int), int tickRate, int lastAction) {
+	int tickdiff = tick - lastAction;
+
+	if (tickdiff > tickRate) {
+		int intervals = tickdiff / tickRate;
+		callback(intervals);
+		return lastAction += tickRate;
+	}
+
+	return lastAction;
+}
+
+//Main thread function that represents agents
+void megaThread(std::unordered_map<std::string, int> headers, char** data) {
+
+	//set up agent variables
+	int fillBucketRate = atoi(data[headers["FILL_BUCKET"]]);
+	int emptyBucketRate = atoi(data[headers["EMPTY_BUCKET"]]);
+
+	//set up time tracking variables
+	int fillBucketTick = 0;
+	int emptyBucketTick = 0;
+
+	//do agent stuff
+	while (true) {
+		suspendThread(10); //suspend thread for performance
+		if (fillBucketRate) fillBucketTick = checkInterval(fillBucket, fillBucketRate, fillBucketTick);
+		if (emptyBucketRate) emptyBucketTick = checkInterval(emptyBucket,emptyBucketRate, emptyBucketTick);
+	}
+}
+//////////////////////////////////////////
+////// GENERAL THREAD FUNCTIONS END //////
+//////////////////////////////////////////

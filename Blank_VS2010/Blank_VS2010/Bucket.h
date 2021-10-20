@@ -3,6 +3,10 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <unordered_map>
+#include <string>
+#include "stdafx.h"
+#include "Bucket.h"
 
 //namespace bkt {
 	//variables
@@ -11,6 +15,5 @@
 
 	//functions
 	void timer();
-	void emptyBucket();
-	void fillBucket();
+	void megaThread(std::unordered_map<std::string, int> headers, char** data);
 //}
