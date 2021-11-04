@@ -9,18 +9,20 @@
 #include <functional>
 
 
-class Bucket {
-	public:
-		//variables
-		int tick;
-		double water;
+//variables
+extern int tick;
+extern double water;
 
-		//getters
-		double getWater();
+class Bucket {
+
+	public:
 
 		//functions
 		void megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data);
 		void timer(void);
+
+		//getters
+		//static double getWater();
 
 	private:
 		void changeWater(double waterTick);

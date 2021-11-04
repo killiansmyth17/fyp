@@ -19,9 +19,9 @@ std::mutex waterMutex;
 
 
 ////// GETTERS BEGIN //////
-double Bucket::getWater() {
-	return water;
-}
+//double Bucket::getWater() {
+//	return water;
+//}
 ////// GETTERS END //////
 
 
@@ -60,6 +60,10 @@ void Bucket::suspendThread(int milliseconds) {
 void Bucket::timer(void) {
 	while (true) {
 		suspendThread(100);
+		//if (tick % 10 == 0) {
+			//QCustomPlotTestVS test;
+			//test.plotData(tick);
+		//}
 		tick++;
 	}
 }

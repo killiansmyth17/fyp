@@ -1,6 +1,7 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
 #include "ui_QCustomPlotTestVS.h"
+#include "Bucket.h"
 
 namespace Ui {
 	class QCustomPlotTestVS;
@@ -16,7 +17,7 @@ public:
 	
 	void addPoint(double x, double y);
 	void plot();
-	void plotData(int tick);
+	//void plotData(int tick);
 
 private:
     Ui::QCustomPlotTestVSClass *ui;

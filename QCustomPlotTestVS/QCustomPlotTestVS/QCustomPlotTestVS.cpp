@@ -39,12 +39,13 @@ void QCustomPlotTestVS::plot() {
 	ui->saber->update();
 }
 
-void QCustomPlotTestVS::plotData(int tick) {
-	addPoint((double)tick, Bucket::getWater());
-}
+/*void QCustomPlotTestVS::plotData(int time) {
+	addPoint(time, water);
+	plot();
+}*/
 
 void QCustomPlotTestVS::on_btn_add_clicked() {
-	addPoint(ui->x->value(), ui->y->value());
+	addPoint((double)tick, water);
 	plot();
 }
 

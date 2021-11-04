@@ -29,7 +29,7 @@ static int processAgent(void* NotUsed, int argc, char** argv, char** colName) {
 	}
 
 	//make thread
-	threads.push_back(std::thread(megaThread, headers, data));
+	threads.push_back(std::thread(&Bucket::megaThread, Bucket(), headers, data));
 
 	return 0;
 }
@@ -66,7 +66,7 @@ int main()
 	if (rc) return 1;
 
 	// Set up timer thread last, kicks off whole process
-	std::thread timeThread(timer);
+	std::thread timeThread(&Bucket::timer, Bucket());
 	timeThread.join(); //CHANGE THIS BACK AFTER
 
 	return 0;
