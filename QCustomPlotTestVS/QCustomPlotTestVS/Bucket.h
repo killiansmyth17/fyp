@@ -6,10 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-
-/*namespace bkt {
-	class Bucket;
-}*/
+#include <functional>
 
 
 class Bucket {
@@ -18,13 +15,17 @@ class Bucket {
 		int tick;
 		double water;
 
-		//functions
-		void timer();
-		void megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data);
-
+		//getters
 		double getWater();
 
+		//functions
+		void megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data);
+		void timer(void);
+
 	private:
-		
 		void changeWater(double waterTick);
+		void fillBucket(int intervals);
+		void emptyBucket(int intervals);
+		void suspendThread(int milliseconds);
+		int checkInterval(std::function<void(int)> callback, int tickRate, int lastAction);
 };

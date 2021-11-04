@@ -1,5 +1,6 @@
 #include "QCustomPlotTestVS.h"
 #include "ui_QCustomPlotTestVS.h"
+#include "Bucket.h"
 
 QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
     : QMainWindow(parent),
@@ -36,6 +37,10 @@ void QCustomPlotTestVS::plot() {
 	ui->saber->graph()->setData(qv_x, qv_y);
 	ui->saber->replot();
 	ui->saber->update();
+}
+
+void QCustomPlotTestVS::plotData(int tick) {
+	addPoint((double)tick, Bucket::getWater());
 }
 
 void QCustomPlotTestVS::on_btn_add_clicked() {

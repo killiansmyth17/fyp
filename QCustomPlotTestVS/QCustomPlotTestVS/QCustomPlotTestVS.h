@@ -1,5 +1,4 @@
 #pragma once
-
 #include <QtWidgets/QMainWindow>
 #include "ui_QCustomPlotTestVS.h"
 
@@ -17,6 +16,7 @@ public:
 	
 	void addPoint(double x, double y);
 	void plot();
+	void plotData(int tick);
 
 private:
     Ui::QCustomPlotTestVSClass *ui;
