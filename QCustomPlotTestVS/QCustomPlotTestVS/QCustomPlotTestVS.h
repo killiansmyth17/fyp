@@ -17,6 +17,7 @@ public:
 	
 	void addPoint(double x, double y);
 	void plot();
+	void setupOrigin();
 	//void plotData(int tick);
 
 private:
@@ -26,7 +27,8 @@ private:
 	int count = 0;
 
 private slots:
-	void on_btn_add_clicked();
+	void plotPerSecond();
+	//void on_btn_add_clicked();
 	void horzScrollBarChanged(int value);
 	void vertScrollBarChanged(int value);
 	void xAxisChanged(QCPRange range);

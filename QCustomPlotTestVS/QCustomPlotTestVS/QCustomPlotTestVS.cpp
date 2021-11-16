@@ -15,13 +15,20 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 
 	ui->saber->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
-	connect(ui->btn_add, SIGNAL(clicked()), this, SLOT(on_btn_add_clicked()));
+	setupOrigin();
+
+	//connect(ui->btn_add, SIGNAL(clicked()), this, SLOT(on_btn_add_clicked()));
 
 	// create connection between axes and scroll bars:
 	connect(ui->horizontalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(horzScrollBarChanged(int)));
 	connect(ui->verticalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(vertScrollBarChanged(int)));
 	connect(ui->saber->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(xAxisChanged(QCPRange)));
 	connect(ui->saber->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(yAxisChanged(QCPRange)));
+
+	//set up a 1 second timer, fires slot every second
+	QTimer* timer = new QTimer(this);
+	connect(timer, SIGNAL(timeout()), this, SLOT(plotPerSecond()));
+	timer->start(1000);
 }
 
 QCustomPlotTestVS::~QCustomPlotTestVS() {
@@ -39,15 +46,22 @@ void QCustomPlotTestVS::plot() {
 	ui->saber->update();
 }
 
-/*void QCustomPlotTestVS::plotData(int time) {
-	addPoint(time, water);
+void QCustomPlotTestVS::setupOrigin() {
+	addPoint(0, 0);
 	plot();
-}*/
+}
 
-void QCustomPlotTestVS::on_btn_add_clicked() {
+void QCustomPlotTestVS::plotPerSecond() {
 	addPoint((double)tick, water);
 	plot();
 }
+
+/*void QCustomPlotTestVS::on_btn_add_clicked() {
+	addPoint((double)tick, water);
+	plot();
+}*/
+
+
 
 /// SCROLL BAR FUNCTIONS  BEGIN ///
 void QCustomPlotTestVS::horzScrollBarChanged(int value)
