@@ -11,7 +11,7 @@
 
 //variables
 extern int tick;
-extern double water;
+extern double joules;
 
 class Bucket {
 
@@ -25,9 +25,9 @@ class Bucket {
 		//static double getWater();
 
 	private:
-		void changeWater(double waterTick);
-		void fillBucket(int intervals);
-		void emptyBucket(int intervals);
+		void changeJoules(double joulesTick);
+		void chargeBattery(int intervals);
+		void drainBattery(int intervals);
 		void suspendThread(int milliseconds);
 		int checkInterval(std::function<void(int)> callback, int tickRate, int lastAction);
 };

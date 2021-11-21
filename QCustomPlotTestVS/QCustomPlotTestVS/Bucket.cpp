@@ -12,9 +12,9 @@
 #include "QCustomPlotTestVS.h"
 
 
-int tick = 0;
-double water = 0;
-std::mutex waterMutex;
+int tick = 0; //increments 10 times every second
+double joules = 0;
+std::mutex joulesMutex;
 
 
 
@@ -27,25 +27,25 @@ std::mutex waterMutex;
 
 
 ////// MUTEX FUNCTIONS BEGIN //////
-void Bucket::changeWater(double waterTick) {
-	waterMutex.lock();
+void Bucket::changeJoules(double joulesTick) {
+	joulesMutex.lock();
 
-	water += waterTick;
-	std::cout << water << " litres of water in the bucket\n" << std::endl;
+	joules += joulesTick;
+	std::cout << joules << " joules of energy in the battery\n" << std::endl;
 
-	waterMutex.unlock();
+	joulesMutex.unlock();
 }
 ////// MUTEX FUNCTIONS END //////
 
 
 
 ////// AGENT ACTION FUNCTIONS BEGIN //////
-void Bucket::fillBucket(int intervals) {
-	changeWater(intervals * 1);
+void Bucket::chargeBattery(int intervals) {
+	changeJoules(intervals * 1);
 }
 
-void Bucket::emptyBucket(int intervals) {
-	changeWater(intervals * -1);
+void Bucket::drainBattery(int intervals) {
+	changeJoules(intervals * -1);
 }
 ////// AGENT ACTION FUNCTIONS END //////
 
@@ -84,20 +84,20 @@ int Bucket::checkInterval(std::function<void(int)> callback, int tickRate, int l
 //Main thread function that represents agents
 void Bucket::megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
 	//set up agent variables
-	int fillBucketRate = stoi(data[headers["FILL_BUCKET"]]);
-	int emptyBucketRate = stoi(data[headers["EMPTY_BUCKET"]]);
+	int chargeBatteryRate = stoi(data[headers["FILL_BUCKET"]]);
+	int drainBatteryRate = stoi(data[headers["EMPTY_BUCKET"]]);
 
 	//set up time tracking variables
-	int fillBucketTick = 0;
-	int emptyBucketTick = 0;
+	int chargeBatteryTick = 0;
+	int drainBatteryTick = 0;
 
 	using namespace std::placeholders; //for _1
 	//do agent stuff
 	while (true) {
 		suspendThread(10); //suspend thread for performance
 		
-		if (fillBucketRate) fillBucketTick = checkInterval(std::bind(&Bucket::fillBucket, this, _1), fillBucketRate, fillBucketTick);
-		if (emptyBucketRate) emptyBucketTick = checkInterval(std::bind(&Bucket::emptyBucket, this, _1), emptyBucketRate, emptyBucketTick);
+		if (chargeBatteryRate) chargeBatteryTick = checkInterval(std::bind(&Bucket::chargeBattery, this, _1), chargeBatteryRate, chargeBatteryTick);
+		if (drainBatteryRate) drainBatteryTick = checkInterval(std::bind(&Bucket::drainBattery, this, _1), drainBatteryRate, drainBatteryTick);
 	}
 }
 ////// GENERAL THREAD FUNCTIONS END //////

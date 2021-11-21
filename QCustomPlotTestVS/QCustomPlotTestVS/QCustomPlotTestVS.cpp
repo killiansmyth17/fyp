@@ -52,7 +52,7 @@ void QCustomPlotTestVS::setupOrigin() {
 }
 
 void QCustomPlotTestVS::plotPerSecond() {
-	addPoint((double)tick, water);
+	addPoint((double)tick, joules);
 	plot();
 }
 
