@@ -52,7 +52,7 @@ int createThreads() {
 		return 1;
 	}
 
-	const char* sql = "SELECT * FROM AGENTS WIND WATTS";
+	const char* sql = "SELECT * FROM \"Agents Wind Watts\"";
 	rc = sqlite3_exec(db, sql, processAgent, 0, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error: " << zErrMsg << std::endl;

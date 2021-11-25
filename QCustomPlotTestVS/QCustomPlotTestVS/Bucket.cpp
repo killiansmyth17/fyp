@@ -17,7 +17,7 @@ int tick = 0; //increments 10 times every second
 int ticksPerAction = 10; //one action every 10 ticks, divide 
 
 double joules = 0; //joules in battery (megajoules for now)
-double batteryCapacity = 500;
+double batteryCapacity = 50000;
 
 std::mutex joulesMutex;
 
@@ -126,7 +126,7 @@ int Bucket::getTimetable(std::string tableName, std::unordered_map<int, int> &da
 	}
 
 	Vector2D data;
-	const char* query = "SELECT * FROM Agents Wind Watts";
+	const char* query = "SELECT * FROM \"Wind Generation Watts\"";
 	rc = sqlite3_exec(db, query, handleData, &data, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		 std::cerr << "SQL error: " << zErrMsg << std::endl;
@@ -135,7 +135,7 @@ int Bucket::getTimetable(std::string tableName, std::unordered_map<int, int> &da
 
 	sqlite3_close(db); //close db connection
 
-	for (int i = 1; i < data.size(); i++) {
+	for (int i = 0; i < data.size(); i++) {
 		int index = std::stoi(data[i][0]);
 		datamap[index] = std::stoi(data[i][1]);
 	}
@@ -151,7 +151,6 @@ void Bucket::windGeneration() {
 	int chargeBatteryTick = 0;
 	while (true) {
 		suspendThread(100); //sleep for performance
-
 		int chargeBatteryRate = 10; //number of ticks to wait before applying change to battery
 		chargeBatteryTick = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), datamap[getTime()], chargeBatteryRate, chargeBatteryTick);
 	}
@@ -174,8 +173,8 @@ boolean strCompare(std::string str, std::string comp) {
 //Main thread function that represents agents
 void Bucket::megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
 
-	//get the shit
-	std::string type = data_string(headers, data, "type");
+	//get the agent type
+	std::string type = data_string(headers, data, "Type");
 
 	//set up time tracking variables
 	int chargeBatteryTick = 0;
