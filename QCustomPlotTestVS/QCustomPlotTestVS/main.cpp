@@ -13,7 +13,7 @@
 std::unordered_map<std::string, int> headers;
 std::vector<std::thread> threads;
 
-//callback function for sqlite query
+//callback function for sqlite query, processes SQL data line by line (one line passed into this function at a time)
 static int processAgent(void* NotUsed, int argc, char** argv, char** colName) {
 
 	int i;
@@ -30,6 +30,8 @@ static int processAgent(void* NotUsed, int argc, char** argv, char** colName) {
 	for (i = 0; i < argc; i++) {
 		data.push_back(argv[i]);
 	}
+
+
 
 	//make thread
 	threads.push_back(std::thread(&Bucket::megaThread, Bucket(), headers, data));
@@ -50,7 +52,7 @@ int createThreads() {
 		return 1;
 	}
 
-	const char* sql = "SELECT * FROM AGENTS";
+	const char* sql = "SELECT * FROM AGENTS WIND WATTS";
 	rc = sqlite3_exec(db, sql, processAgent, 0, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error: " << zErrMsg << std::endl;

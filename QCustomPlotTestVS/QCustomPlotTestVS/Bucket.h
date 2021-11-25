@@ -25,9 +25,12 @@ class Bucket {
 		//static double getWater();
 
 	private:
+		int getTime();
+		int getTimetable(std::string tableName, std::unordered_map<int, int> &datamap);
+		void windGeneration();
 		void changeJoules(double joulesTick);
 		void chargeBattery(int intervals);
 		void drainBattery(int intervals);
 		void suspendThread(int milliseconds);
-		int checkInterval(std::function<void(int)> callback, int tickRate, int lastAction);
+		int checkInterval(std::function<void(int)> callback, int amount, int tickRate, int lastAction);
 };
