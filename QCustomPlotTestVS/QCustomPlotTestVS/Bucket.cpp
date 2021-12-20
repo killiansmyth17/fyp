@@ -13,10 +13,10 @@
 #include "QCustomPlotTestVS.h"
 
 
-int tick = 0; //increments 10 times every second
-int ticksPerAction = 10; //one action every 10 ticks, divide 
+int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)
+int ticksPerAction = 10; //one action every 10 ticks, multiply watts by 60 to get joules
 
-double joules = 0; //joules in battery (megajoules for now)
+double joules = 0; //joules in battery (kJ for now)
 double batteryCapacity = 50000;
 
 std::mutex joulesMutex;
@@ -25,11 +25,15 @@ std::mutex joulesMutex;
 using Vector1D = std::vector<std::string>;
 using Vector2D = std::vector<Vector1D>;
 
-////// GETTERS BEGIN //////
-//double Bucket::getWater() {
-//	return water;
-//}
-////// GETTERS END //////
+////// GENERATOR SPECS BEGIN //////
+std::unordered_map<std::string, double> windTurbine{
+	{"ratedPower", 3.5}, //kiloWatts, update every time you update k
+	{"ratedWindSpeed", 14},
+	{"cutOut", 30},
+	{"cutIn", 2},
+	{"k", 0.017854714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
+};
+////// GENERATOR SPECS END //////
 
 
 
@@ -67,15 +71,11 @@ void Bucket::suspendThread(int milliseconds) {
 void Bucket::timer(void) {
 	while (true) {
 		suspendThread(100);
-		//if (tick % 10 == 0) {
-			//QCustomPlotTestVS test;
-			//test.plotData(tick);
-		//}
 		tick++;
 	}
 }
 
-//roundabout way to convert decimal minutes to 24 hour clock
+//hacky way to convert ticks to 24 hour clock as int
 int Bucket::getTime() {
 	int time = tick / 10; //first divide by 10 to get minutes (1 tick = 0.1 min)
 	time = time % 1440; //24 hours * 60 = 1440 minutes -> 24 hour wrap
@@ -88,13 +88,15 @@ int Bucket::getTime() {
 }
 
 //Check if enough time has passed for action to happen
-int Bucket::checkInterval(std::function<void(int)> callback, int amount, int tickRate, int lastAction) {
+int Bucket::checkInterval(std::function<void(int)> callback, double amount, int lastAction) {
 	int tickdiff = tick - lastAction;
 
-	if (tickdiff > tickRate) {
-		int intervals = tickdiff / tickRate;
-		callback(intervals*amount);
-		return lastAction += tickRate;
+	if (tickdiff > ticksPerAction) {
+		double seconds = ticksPerAction * 6; //1 tick represents 6 seconds
+
+		int intervals = tickdiff / ticksPerAction;
+		callback(intervals*amount*seconds);
+		return lastAction += ticksPerAction;
 	}
 
 	return lastAction;
@@ -112,7 +114,7 @@ static int handleData(void* data, int argc, char** argv, char** colName) {
 	return 0;
 }
 
-int Bucket::getTimetable(std::string tableName, std::unordered_map<int, int> &datamap) {
+int Bucket::getTimetable(std::string tableName, std::unordered_map<int, double> &datamap) {
 
 	//Create database connection
 	sqlite3* db; //database connection
@@ -126,8 +128,8 @@ int Bucket::getTimetable(std::string tableName, std::unordered_map<int, int> &da
 	}
 
 	Vector2D data;
-	const char* query = "SELECT * FROM \"Wind Generation Watts\"";
-	rc = sqlite3_exec(db, query, handleData, &data, &zErrMsg);
+	std::string query ("SELECT * FROM \""+tableName+"\"");
+	rc = sqlite3_exec(db, query.c_str(), handleData, &data, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		 std::cerr << "SQL error: " << zErrMsg << std::endl;
 		 sqlite3_free(zErrMsg);
@@ -137,7 +139,7 @@ int Bucket::getTimetable(std::string tableName, std::unordered_map<int, int> &da
 
 	for (int i = 0; i < data.size(); i++) {
 		int index = std::stoi(data[i][0]);
-		datamap[index] = std::stoi(data[i][1]);
+		datamap[index] = std::stod(data[i][1]);
 	}
 
 	return 0;
@@ -145,14 +147,27 @@ int Bucket::getTimetable(std::string tableName, std::unordered_map<int, int> &da
 
 void Bucket::windGeneration() {
 	//get timetable
-	std::unordered_map<int, int> datamap;
-	getTimetable("Wind Generation Watts", datamap); //datamap passed by reference
+	std::unordered_map<int, double> windTimetable;
+	getTimetable("Wind Speeds", windTimetable); //datamap passed by reference
 
-	int chargeBatteryTick = 0;
+	int lastAction = 0;
+	
 	while (true) {
 		suspendThread(100); //sleep for performance
-		int chargeBatteryRate = 10; //number of ticks to wait before applying change to battery
-		chargeBatteryTick = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), datamap[getTime()], chargeBatteryRate, chargeBatteryTick);
+
+		double windSpeed = windTimetable[getTime()];
+
+		//calculate power generation from wind speed
+		double windPower;
+		if (windSpeed > windTurbine["cutOut"] || windSpeed < windTurbine["cutIn"]) { //if turbine can't turn
+			windPower = 0;
+		} else if (windSpeed > windTurbine["ratedWindSpeed"]) { // power gen caps at ratedPower when ratedWindSpeed is reached
+			windPower = windTurbine["ratedPower"];
+		} else {
+			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
+		}
+
+		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), windPower, lastAction);
 	}
 }
 
