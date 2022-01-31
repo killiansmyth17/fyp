@@ -13,17 +13,17 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 	ui->saber->graph()->setScatterStyle(QCPScatterStyle::ssCircle);
 	ui->saber->graph()->setLineStyle(QCPGraph::lsLine);
 
-	ui->saber->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+	//ui->saber->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom); //allows click drag and scroll wheel zoom
 
-	setupOrigin();
+	setupOrigin(); // add points at origin at startup
 
-	//connect(ui->btn_add, SIGNAL(clicked()), this, SLOT(on_btn_add_clicked()));
-
+	/*
 	// create connection between axes and scroll bars:
 	connect(ui->horizontalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(horzScrollBarChanged(int)));
 	connect(ui->verticalScrollBar, SIGNAL(valueChanged(int)), this, SLOT(vertScrollBarChanged(int)));
 	connect(ui->saber->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(xAxisChanged(QCPRange)));
 	connect(ui->saber->yAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(yAxisChanged(QCPRange)));
+	*/
 
 	//set up a 1 second timer, fires slot every second
 	QTimer* timer = new QTimer(this);
@@ -52,17 +52,17 @@ void QCustomPlotTestVS::setupOrigin() {
 }
 
 void QCustomPlotTestVS::plotPerSecond() {
-	addPoint((double)tick, joules);
+	addPoint((double)tick, latestWindPower);
 	plot();
+	ui->saber->yAxis->rescale(); //scale both axes automatically after adding each point
+	ui->saber->xAxis->rescale();
+	ui->saber->replot();
+
+	ui->batteryDisplay->setNum(joules); //display energy in battery
 }
 
-/*void QCustomPlotTestVS::on_btn_add_clicked() {
-	addPoint((double)tick, water);
-	plot();
-}*/
 
-
-
+/*
 /// SCROLL BAR FUNCTIONS  BEGIN ///
 void QCustomPlotTestVS::horzScrollBarChanged(int value)
 {
@@ -77,7 +77,8 @@ void QCustomPlotTestVS::vertScrollBarChanged(int value)
 {
 	if (qAbs(ui->saber->yAxis->range().center() + value / 100.0) > 0.01) // if user is dragging plot, we don't want to replot twice
 	{
-		ui->saber->yAxis->setRange(-value / 100.0, ui->saber->yAxis->range().size(), Qt::AlignCenter);
+		ui->saber->yAxis->rescale();
+		//ui->saber->yAxis->setRange(-value / 100.0, ui->saber->yAxis->range().size(), Qt::AlignCenter);
 		ui->saber->replot();
 	}
 }
@@ -94,3 +95,4 @@ void QCustomPlotTestVS::yAxisChanged(QCPRange range)
 	ui->verticalScrollBar->setPageStep(qRound(range.size() * 100.0)); // adjust size of scroll bar slider
 }
 /// SCROLL BAR FUNCTIONS END ///
+*/

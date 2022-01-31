@@ -12,6 +12,7 @@
 //variables
 extern int tick;
 extern double joules;
+extern double latestWindPower;
 
 class Bucket {
 

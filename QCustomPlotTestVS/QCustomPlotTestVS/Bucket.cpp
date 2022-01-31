@@ -19,6 +19,9 @@ int ticksPerAction = 10; //one action every 10 ticks, multiply watts by 60 to ge
 double joules = 0; //joules in battery (kJ for now)
 double batteryCapacity = 50000;
 
+//graphing values:
+double latestWindPower = 0;
+
 std::mutex joulesMutex;
 
 //create alias for 2D Vector
@@ -166,6 +169,8 @@ void Bucket::windGeneration() {
 		} else {
 			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
 		}
+
+		latestWindPower = windPower; //update graphing value with latest data
 
 		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), windPower, lastAction);
 	}

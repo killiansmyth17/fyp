@@ -29,8 +29,8 @@ private:
 private slots:
 	void plotPerSecond();
 	//void on_btn_add_clicked();
-	void horzScrollBarChanged(int value);
-	void vertScrollBarChanged(int value);
-	void xAxisChanged(QCPRange range);
-	void yAxisChanged(QCPRange range);
+	//void horzScrollBarChanged(int value);
+	//void vertScrollBarChanged(int value);
+	//void xAxisChanged(QCPRange range);
+	//void yAxisChanged(QCPRange range);
 };
