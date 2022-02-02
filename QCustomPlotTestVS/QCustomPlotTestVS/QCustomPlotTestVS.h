@@ -14,8 +14,9 @@ class QCustomPlotTestVS : public QMainWindow
 public:
     explicit QCustomPlotTestVS(QWidget *parent = Q_NULLPTR);
 	~QCustomPlotTestVS();
-	
-	void addPoint(double x, double y);
+
+	void addConsumptionPoint(double x, std::vector<double> vec);
+	void addWindPoint(double x, std::vector<double> vec);
 	void plot();
 	void setupOrigin();
 	//void plotData(int tick);
@@ -23,7 +24,7 @@ public:
 private:
     Ui::QCustomPlotTestVSClass *ui;
 
-	QVector<double> qv_x, qv_y;
+	QVector<double> wind_x, wind_y, consumption_x, consumption_y;
 	int count = 0;
 
 private slots:

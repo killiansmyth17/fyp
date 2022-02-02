@@ -10,8 +10,14 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 	
 
 	ui->saber->addGraph();
-	ui->saber->graph()->setScatterStyle(QCPScatterStyle::ssCircle);
-	ui->saber->graph()->setLineStyle(QCPGraph::lsLine);
+	ui->saber->graph(0)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->saber->graph(0)->setLineStyle(QCPGraph::lsLine);
+	ui->saber->graph(0)->setName("Wind power");
+
+	ui->saber->addGraph();
+	ui->saber->graph(1)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->saber->graph(1)->setLineStyle(QCPGraph::lsLine);
+	ui->saber->graph(1)->setName("Power consumption");
 
 	//ui->saber->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom); //allows click drag and scroll wheel zoom
 
@@ -35,29 +41,53 @@ QCustomPlotTestVS::~QCustomPlotTestVS() {
 	delete ui;
 }
 
-void QCustomPlotTestVS::addPoint(double x, double y) {
-	qv_x.append(x);
-	qv_y.append(y);
+void QCustomPlotTestVS::addConsumptionPoint(double x, std::vector<double> vec) {
+	double y = 0;
+	for (int i = 0; i < vec.size(); i++) {
+		y += vec[i];
+	}
+
+	consumption_x.append(x);
+	consumption_y.append(y);
+}
+
+void QCustomPlotTestVS::addWindPoint(double x, std::vector<double> vec) {
+	double y = 0;
+	for (int i = 0; i < vec.size(); i++) {
+		y += vec[i];
+	}
+
+	wind_x.append(x);
+	wind_y.append(y);
 }
 
 void QCustomPlotTestVS::plot() {
-	ui->saber->graph()->setData(qv_x, qv_y);
+	ui->saber->graph(0)->setData(wind_x, wind_y);
+	ui->saber->graph(1)->setData(consumption_x, consumption_y);
 	ui->saber->replot();
 	ui->saber->update();
 }
 
 void QCustomPlotTestVS::setupOrigin() {
-	addPoint(0, 0);
+	std::vector<double> zeroVec;
+	zeroVec.push_back(0);
+	addWindPoint(0, zeroVec);
+	addConsumptionPoint(0, zeroVec);
 	plot();
 }
 
 void QCustomPlotTestVS::plotPerSecond() {
-	addPoint((double)tick, latestWindPower);
+	double thisTick = (double)tick;
+	std::vector<double> thisPowerConsumption = latestPowerConsumption;
+	std::vector<double> thisWindPower = latestWindPower;
+
+	addWindPoint(thisTick, thisWindPower);
+	addConsumptionPoint(thisTick, thisPowerConsumption);
+
 	plot();
 	ui->saber->yAxis->rescale(); //scale both axes automatically after adding each point
 	ui->saber->xAxis->rescale();
 	ui->saber->replot();
-
 	ui->batteryDisplay->setNum(joules); //display energy in battery
 }
 

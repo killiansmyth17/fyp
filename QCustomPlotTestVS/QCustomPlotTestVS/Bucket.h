@@ -12,7 +12,11 @@
 //variables
 extern int tick;
 extern double joules;
-extern double latestWindPower;
+extern std::vector<double> latestWindPower;
+extern std::vector<double> latestPowerConsumption;
+
+//alias for timetable datatype
+using Timetable = std::unordered_map<int, double>;
 
 class Bucket {
 
@@ -22,13 +26,11 @@ class Bucket {
 		void megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data);
 		void timer(void);
 
-		//getters
-		//static double getWater();
-
 	private:
 		int getTime();
-		int getTimetable(std::string tableName, std::unordered_map<int, double> &datamap);
-		void windGeneration();
+		int getTimetable(std::string tableName, Timetable &datamap);
+		void powerConsumption(std::string tableName, int index);
+		void windGeneration(std::string tableName, int index);
 		void changeJoules(double joulesTick);
 		void chargeBattery(int intervals);
 		void drainBattery(int intervals);

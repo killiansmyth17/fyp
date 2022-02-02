@@ -20,13 +20,20 @@ double joules = 0; //joules in battery (kJ for now)
 double batteryCapacity = 50000;
 
 //graphing values:
-double latestWindPower = 0;
+int windCount = 0;
+int consumerCount = 0;
+std::vector<double> latestWindPower;
+std::vector<double> latestPowerConsumption;
 
 std::mutex joulesMutex;
+std::mutex countMutex;
 
 //create alias for 2D Vector
 using Vector1D = std::vector<std::string>;
 using Vector2D = std::vector<Vector1D>;
+
+//alias for timetable datatype
+using Timetable = std::unordered_map<int, double>;
 
 ////// GENERATOR SPECS BEGIN //////
 std::unordered_map<std::string, double> windTurbine{
@@ -34,7 +41,7 @@ std::unordered_map<std::string, double> windTurbine{
 	{"ratedWindSpeed", 14},
 	{"cutOut", 30},
 	{"cutIn", 2},
-	{"k", 0.017854714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
+	{"k", 0.01785714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
 };
 ////// GENERATOR SPECS END //////
 
@@ -78,7 +85,7 @@ void Bucket::timer(void) {
 	}
 }
 
-//hacky way to convert ticks to 24 hour clock as int
+//hacky way to convert ticks to 24 hour clock as int for database querying
 int Bucket::getTime() {
 	int time = tick / 10; //first divide by 10 to get minutes (1 tick = 0.1 min)
 	time = time % 1440; //24 hours * 60 = 1440 minutes -> 24 hour wrap
@@ -117,7 +124,7 @@ static int handleData(void* data, int argc, char** argv, char** colName) {
 	return 0;
 }
 
-int Bucket::getTimetable(std::string tableName, std::unordered_map<int, double> &datamap) {
+int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 
 	//Create database connection
 	sqlite3* db; //database connection
@@ -148,19 +155,38 @@ int Bucket::getTimetable(std::string tableName, std::unordered_map<int, double> 
 	return 0;
 }
 
-void Bucket::windGeneration() {
+//power consumption data stored as watts
+void Bucket::powerConsumption(std::string tableName, int index) {
 	//get timetable
-	std::unordered_map<int, double> windTimetable;
-	getTimetable("Wind Speeds", windTimetable); //datamap passed by reference
+	Timetable powerTimetable;
+	getTimetable(tableName, powerTimetable);
+
+	int lastAction = 0;
+
+	while (true) {
+		double powerConsumption = powerTimetable[getTime()]/1000; //in kiloWatts
+
+		// need to implement functionality for totalling power consumption later, probably here (because this is dogshit lmao)
+		latestPowerConsumption[index] = powerConsumption;
+
+		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), powerConsumption*-60, lastAction);
+		suspendThread(100); //sleep for performance
+	}
+}
+
+//wind data as wind speed, converted using generator defined in this program
+void Bucket::windGeneration(std::string tableName, int index) {
+	//get timetable
+	Timetable windTimetable;
+	getTimetable(tableName, windTimetable); //datamap passed by reference
 
 	int lastAction = 0;
 	
 	while (true) {
-		suspendThread(100); //sleep for performance
 
 		double windSpeed = windTimetable[getTime()];
 
-		//calculate power generation from wind speed
+		//calculate power generation from wind speed (generator has cut out and cut in ratings, as well as rated speed, all need to be taken into account)
 		double windPower;
 		if (windSpeed > windTurbine["cutOut"] || windSpeed < windTurbine["cutIn"]) { //if turbine can't turn
 			windPower = 0;
@@ -170,39 +196,70 @@ void Bucket::windGeneration() {
 			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
 		}
 
-		latestWindPower = windPower; //update graphing value with latest data
+		latestWindPower[index] = windPower; //update graphing value with latest data
 
-		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), windPower, lastAction);
+		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), windPower*60, lastAction);
+		suspendThread(100); //sleep for performance
 	}
 }
 
-//SQL data handling begin
+
+
 int data_stoi(std::unordered_map<std::string, int> headers, std::vector<std::string> data, std::string query) {
 	return stoi(data[headers[query]]);
 }
 
+//get data from query using column name for the current row
 std::string data_string(std::unordered_map<std::string, int> headers, std::vector<std::string> data, std::string query) {
-	return data[headers[query]];
+	return data[headers[query]]; //headers stores index of each header, data obtained using this index
 }
 
 boolean strCompare(std::string str, std::string comp) {
 	return str.compare(comp) == 0;
 }
-//SQL data handling end
+
+
+
+//increments thread count and expands vector by 1
+void incrementCount(std::string type) {
+	if (strCompare(type, "wind")) {
+		windCount++;
+		latestWindPower.push_back(0);
+	}
+
+	if (strCompare(type, "consumer")) {
+		consumerCount++;
+		latestPowerConsumption.push_back(0);
+	}
+}
 
 //Main thread function that represents agents
 void Bucket::megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
 
 	//get the agent type
+	std::string tableName = data_string(headers, data, "Name");
 	std::string type = data_string(headers, data, "Type");
 
 	//set up time tracking variables
-	int chargeBatteryTick = 0;
-	int drainBatteryTick = 0;
+	//int chargeBatteryTick = 0;
+	//int drainBatteryTick = 0;
 
-	using namespace std::placeholders; //for _1
+	//using namespace std::placeholders; //for _1
+
+	countMutex.lock(); //need to lock code segment until thread is assigned index
+	incrementCount(type);
 
 	//kick off agent process
-	if (strCompare(type, "wind")) windGeneration();
+	if (strCompare(type, "wind")) {
+		int index = windCount-1;
+		countMutex.unlock();
+		windGeneration(tableName, index);
+	}
+
+	if (strCompare(type, "consumer")) {
+		int index = consumerCount-1;
+		countMutex.unlock();
+		powerConsumption(tableName, index);
+	}
 }
 ////// GENERAL THREAD FUNCTIONS END //////

@@ -17,7 +17,7 @@ std::vector<std::thread> threads;
 static int processAgent(void* NotUsed, int argc, char** argv, char** colName) {
 
 	int i;
-	//populate headers map ONCE for robust indexing of data with column headers
+	//populate headers map ONCE for robust indexing of data with column headers (first line will be headers)
 	if (!(headers["Count"])) {
 		for (i = 0; i < argc; i++) {
 			std::string index(colName[i]);
@@ -52,7 +52,7 @@ int createThreads() {
 		return 1;
 	}
 
-	const char* sql = "SELECT * FROM \"Agents Wind Watts\"";
+	const char* sql = "SELECT * FROM \"Agents\"";
 	rc = sqlite3_exec(db, sql, processAgent, 0, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error: " << zErrMsg << std::endl;
