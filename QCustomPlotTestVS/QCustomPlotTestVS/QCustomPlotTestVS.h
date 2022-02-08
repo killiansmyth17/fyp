@@ -15,16 +15,18 @@ public:
     explicit QCustomPlotTestVS(QWidget *parent = Q_NULLPTR);
 	~QCustomPlotTestVS();
 
+	double sumVector(std::vector<double> vec);
 	void addConsumptionPoint(double x, std::vector<double> vec);
 	void addWindPoint(double x, std::vector<double> vec);
+	void addSolarPoint(double x, std::vector<double> vec);
+	void addGasPoint(double x, std::vector<double> wind, std::vector<double> solar, std::vector<double> consumption);
 	void plot();
 	void setupOrigin();
-	//void plotData(int tick);
 
 private:
     Ui::QCustomPlotTestVSClass *ui;
 
-	QVector<double> wind_x, wind_y, consumption_x, consumption_y;
+	QVector<double> wind_x, wind_y, solar_x, solar_y, consumption_x, consumption_y, gas_x, gas_y;
 	int count = 0;
 
 private slots:

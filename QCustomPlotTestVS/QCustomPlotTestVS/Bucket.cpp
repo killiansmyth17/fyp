@@ -23,6 +23,7 @@ double batteryCapacity = 50000;
 int windCount = 0;
 int consumerCount = 0;
 std::vector<double> latestWindPower;
+std::vector<double> latestSolarPower;
 std::vector<double> latestPowerConsumption;
 
 std::mutex joulesMutex;
@@ -36,12 +37,16 @@ using Vector2D = std::vector<Vector1D>;
 using Timetable = std::unordered_map<int, double>;
 
 ////// GENERATOR SPECS BEGIN //////
-std::unordered_map<std::string, double> windTurbine{
-	{"ratedPower", 3.5}, //kiloWatts, update every time you update k
+std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW Turbine
+	{"ratedPower", 3.5}, //kiloWatts, tied to k => turbine specs divided by 1000, not the real turbine
 	{"ratedWindSpeed", 14},
 	{"cutOut", 30},
 	{"cutIn", 2},
 	{"k", 0.01785714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
+};
+
+std::unordered_map<std::string, double> solarPanel{
+
 };
 ////// GENERATOR SPECS END //////
 
@@ -157,7 +162,6 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 
 //power consumption data stored as watts
 void Bucket::powerConsumption(std::string tableName, int index) {
-	//get timetable
 	Timetable powerTimetable;
 	getTimetable(tableName, powerTimetable);
 
@@ -174,9 +178,22 @@ void Bucket::powerConsumption(std::string tableName, int index) {
 	}
 }
 
+void Bucket::solarGeneration(std::string tableName, int index) {
+	Timetable solarTimetable;
+	getTimetable(tableName, solarTimetable);
+
+	int lastAction = 0;
+
+	while (true) {
+		double solarGeneration = solarTimetable[getTime()];
+
+		double solarPower;
+		
+	}
+}
+
 //wind data as wind speed, converted using generator defined in this program
 void Bucket::windGeneration(std::string tableName, int index) {
-	//get timetable
 	Timetable windTimetable;
 	getTimetable(tableName, windTimetable); //datamap passed by reference
 
@@ -254,6 +271,12 @@ void Bucket::megaThread(std::unordered_map<std::string, int> headers, std::vecto
 		int index = windCount-1;
 		countMutex.unlock();
 		windGeneration(tableName, index);
+	}
+
+	if (strCompare(type, "solar")) {
+		int index = solarCount-1;
+		countMutex.unlock();
+		solarGeneration(tableName, index);
 	}
 
 	if (strCompare(type, "consumer")) {

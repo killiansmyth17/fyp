@@ -7,18 +7,32 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 	ui(new Ui::QCustomPlotTestVSClass)
 {
     ui->setupUi(this);
-	
 
+	ui->saber->xAxis->setLabel("Ticks (minutes)");
+	ui->saber->yAxis->setLabel("Power (watts)");
+	ui->saber->legend->setVisible(true);
+
+	//Wind power plot setup
 	ui->saber->addGraph();
 	ui->saber->graph(0)->setScatterStyle(QCPScatterStyle::ssCircle);
 	ui->saber->graph(0)->setLineStyle(QCPGraph::lsLine);
 	ui->saber->graph(0)->setName("Wind power");
+	QPen windPen;
+	windPen.setWidth(1);
+	windPen.setColor(QColor(0, 0, 255));
+	ui->saber->graph(0)->setPen(windPen);
 
+	//Power consumption plot setup
 	ui->saber->addGraph();
 	ui->saber->graph(1)->setScatterStyle(QCPScatterStyle::ssCircle);
 	ui->saber->graph(1)->setLineStyle(QCPGraph::lsLine);
 	ui->saber->graph(1)->setName("Power consumption");
+	QPen consumptionPen;
+	consumptionPen.setWidth(1);
+	consumptionPen.setColor(QColor(0, 0, 0));
+	ui->saber->graph(1)->setPen(consumptionPen);
 
+	ui->saber->setInteractions(QCP::iSelectLegend); //show which plot you clicked on in the legend
 	//ui->saber->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom); //allows click drag and scroll wheel zoom
 
 	setupOrigin(); // add points at origin at startup
@@ -41,24 +55,44 @@ QCustomPlotTestVS::~QCustomPlotTestVS() {
 	delete ui;
 }
 
-void QCustomPlotTestVS::addConsumptionPoint(double x, std::vector<double> vec) {
-	double y = 0;
+double QCustomPlotTestVS::sumVector(std::vector<double> vec) {
+	double x = 0;
 	for (int i = 0; i < vec.size(); i++) {
-		y += vec[i];
+		x += vec[i];
 	}
+}
+
+void QCustomPlotTestVS::addConsumptionPoint(double x, std::vector<double> vec) {
+	double y = sumVector(vec);
 
 	consumption_x.append(x);
 	consumption_y.append(y);
 }
 
 void QCustomPlotTestVS::addWindPoint(double x, std::vector<double> vec) {
-	double y = 0;
-	for (int i = 0; i < vec.size(); i++) {
-		y += vec[i];
-	}
+	double y = sumVector(vec);
 
 	wind_x.append(x);
 	wind_y.append(y);
+}
+
+void QCustomPlotTestVS::addSolarPoint(double x, std::vector<double> vec) {
+	double y = sumVector(vec);
+
+	solar_x.append(x);
+	solar_y.append(y);
+}
+
+void QCustomPlotTestVS::addGasPoint(double x, std::vector<double> wind, std::vector<double> solar, std::vector<double> consumption) {
+	double totalGeneration = sumVector(wind);
+	totalGeneration += sumVector(solar);
+
+	double totalConsumption = sumVector(consumption);
+
+	double y = (totalConsumption > totalGeneration) ? totalConsumption - totalGeneration : 0;
+
+	gas_x.append(x);
+	gas_y.append(y);
 }
 
 void QCustomPlotTestVS::plot() {
@@ -85,8 +119,8 @@ void QCustomPlotTestVS::plotPerSecond() {
 	addConsumptionPoint(thisTick, thisPowerConsumption);
 
 	plot();
-	ui->saber->yAxis->rescale(); //scale both axes automatically after adding each point
-	ui->saber->xAxis->rescale();
+	ui->saber->xAxis->setRange(thisTick-1000, thisTick); //auto-scroll X axis
+	ui->saber->yAxis->rescale(); //scale Y axis automatically after adding each point
 	ui->saber->replot();
 	ui->batteryDisplay->setNum(joules); //display energy in battery
 }
