@@ -60,6 +60,8 @@ double QCustomPlotTestVS::sumVector(std::vector<double> vec) {
 	for (int i = 0; i < vec.size(); i++) {
 		x += vec[i];
 	}
+
+	return x;
 }
 
 void QCustomPlotTestVS::addConsumptionPoint(double x, std::vector<double> vec) {

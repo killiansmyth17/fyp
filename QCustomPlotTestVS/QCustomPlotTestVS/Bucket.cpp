@@ -12,6 +12,7 @@
 #include "Bucket.h"
 #include "QCustomPlotTestVS.h"
 
+bool wait = true;
 
 int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)
 int ticksPerAction = 10; //one action every 10 ticks, multiply watts by 60 to get joules
@@ -21,6 +22,7 @@ double batteryCapacity = 50000;
 
 //graphing values:
 int windCount = 0;
+int solarCount = 0;
 int consumerCount = 0;
 std::vector<double> latestWindPower;
 std::vector<double> latestSolarPower;
@@ -45,9 +47,9 @@ std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW T
 	{"k", 0.01785714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
 };
 
-std::unordered_map<std::string, double> solarPanel{
+//std::unordered_map<std::string, double> solarPanel{
 
-};
+//};
 ////// GENERATOR SPECS END //////
 
 

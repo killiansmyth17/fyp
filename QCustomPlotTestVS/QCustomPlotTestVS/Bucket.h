@@ -10,6 +10,7 @@
 
 
 //variables
+extern bool wait;
 extern int tick;
 extern double joules;
 extern std::vector<double> latestWindPower;
@@ -31,6 +32,7 @@ class Bucket {
 		int getTimetable(std::string tableName, Timetable &datamap);
 		void powerConsumption(std::string tableName, int index);
 		void windGeneration(std::string tableName, int index);
+		void solarGeneration(std::string tableName, int index);
 		void changeJoules(double joulesTick);
 		void chargeBattery(int intervals);
 		void drainBattery(int intervals);

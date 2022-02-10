@@ -8,6 +8,7 @@
 #include "sqlite3.h"
 
 #include "QCustomPlotTestVS.h"
+#include "MainWindow.h"
 #include <QtWidgets/QApplication>
 
 std::unordered_map<std::string, int> headers;
@@ -74,7 +75,8 @@ int main(int argc, char *argv[])
 	timeThread.detach();
 
     QApplication a(argc, argv);
-    QCustomPlotTestVS w;
-    w.show();
+	MainWindow w;
+	w.show();
+
     return a.exec();
 }
