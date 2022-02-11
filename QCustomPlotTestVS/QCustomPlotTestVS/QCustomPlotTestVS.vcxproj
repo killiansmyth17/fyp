@@ -111,6 +111,7 @@
   <ItemGroup>
     <ClInclude Include="Bucket.h" />
     <QtMoc Include="MainWindow.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="sqlite3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

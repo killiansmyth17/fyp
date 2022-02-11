@@ -16,4 +16,5 @@ private:
 
 private slots:
 	void clicked();
+	void addWidget();
 };
