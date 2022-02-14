@@ -33,9 +33,9 @@ class Bucket {
 	private:
 		int getTime();
 		int getTimetable(std::string tableName, Timetable &datamap);
-		void powerConsumption(std::string tableName, int index, MainWindow &w);
-		void windGeneration(std::string tableName, int index, MainWindow &w);
-		void solarGeneration(std::string tableName, int index, MainWindow &w);
+		void powerConsumption(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
+		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
+		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void changeJoules(double joulesTick);
 		void chargeBattery(int intervals);
 		void drainBattery(int intervals);
@@ -47,15 +47,15 @@ class AgentUI : public QObject {
 	Q_OBJECT
 
 	public:
-		AgentUI(QObject* parent = Q_NULLPTR) { m_power = 0; };
+		AgentUI(QObject* parent = Q_NULLPTR);
 		~AgentUI();
 		void newAgent(std::string name, std::string type, double power, int index);
-		void setPower(double power);
+		void setPower(std::string type, int index, double power);
+
 	private:
-		double m_power;
 		int m_index;
 
 	signals:
-		void powerChanged(double power);
 		void addAgentToUI(QString name, QString type, double power, int index);
+		void powerChanged(QString type, int index, double power);
 };

@@ -27,16 +27,24 @@ void MainWindow::addWidget(QString name, QString type, double power, int index) 
 
 	//add agent to widget
 	QHBoxLayout* agent = new QHBoxLayout(ui->agents);
-	QLabel* agentName = new QLabel(name, ui->agents);
-	agent->addWidget(agentName);
-	QLabel* agentType = new QLabel(type, ui->agents);
-	agent->addWidget(agentType);
+	QLabel* nameLabel = new QLabel(name, ui->agents);
+	agent->addWidget(nameLabel);
+	QLabel* typeLabel = new QLabel(type, ui->agents);
+	agent->addWidget(typeLabel);
 	QString powerString = QString::number(power);
-	QLabel* agentPower = new QLabel(powerString, ui->agents);
-	agent->addWidget(agentPower);
-
-
+	QLabel* powerLabel = new QLabel(powerString, ui->agents);
+	QString objectName = type + QString::number(index);
+	powerLabel->setObjectName(objectName);
+	agent->addWidget(powerLabel);
 
 	layout->insertLayout(layout->count()-1, agent);
 	//layout->addWidget(button, 0,0);
+}
+
+
+void MainWindow::changePower(QString type, int index, double power) {
+	QString objectName = type + QString::number(index);
+	QLabel* powerLabel = ui->agents->findChild<QLabel*>(objectName);
+	QString powerString = QString::number(power);
+	powerLabel->setText(powerString);
 }

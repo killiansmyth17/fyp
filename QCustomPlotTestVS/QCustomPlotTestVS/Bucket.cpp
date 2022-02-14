@@ -165,16 +165,18 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 }
 
 //power consumption data stored as watts
-void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w) {
+void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, AgentUI& agentUI) {
 	Timetable powerTimetable;
 	getTimetable(tableName, powerTimetable);
+
+	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
 	int lastAction = 0;
 
 	while (true) {
 		double powerConsumption = powerTimetable[getTime()]/1000; //in kiloWatts
+		agentUI.setPower("consumer", index, powerConsumption);
 
-		// need to implement functionality for totalling power consumption later, probably here (because this is dogshit lmao)
 		latestPowerConsumption[index] = powerConsumption;
 
 		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), powerConsumption*-60, lastAction);
@@ -182,24 +184,28 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w) {
 	}
 }
 
-void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w) {
+void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, AgentUI& agentUI) {
 	Timetable solarTimetable;
 	getTimetable(tableName, solarTimetable);
+
+	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
 	int lastAction = 0;
 
 	while (true) {
 		double solarGeneration = solarTimetable[getTime()];
 
-		double solarPower;
-		
+		double solarPower = 0; //TODO
+		agentUI.setPower("solar", index, solarPower);
 	}
 }
 
 //wind data as wind speed, converted using generator defined in this program
-void Bucket::windGeneration(std::string tableName, int index, MainWindow& w) {
+void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, AgentUI& agentUI) {
 	Timetable windTimetable;
 	getTimetable(tableName, windTimetable); //datamap passed by reference
+
+	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
 	int lastAction = 0;
 	
@@ -216,6 +222,8 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w) {
 		} else {
 			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
 		}
+
+		agentUI.setPower("wind", index, windPower);
 
 		latestWindPower[index] = windPower; //update graphing value with latest data
 
@@ -278,21 +286,25 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 		int index = windCount-1;
 		countMutex.unlock();
 		agentUI.newAgent(tableName, type, 0, index);
-		windGeneration(tableName, index, w);
+		windGeneration(tableName, index, w, agentUI);
 	}
 
-	if (strCompare(type, "solar")) {
+	else if (strCompare(type, "solar")) {
 		int index = solarCount-1;
 		countMutex.unlock();
 		agentUI.newAgent(tableName, type, 0, index);
-		solarGeneration(tableName, index, w);
+		solarGeneration(tableName, index, w, agentUI);
 	}
 
-	if (strCompare(type, "consumer")) {
+	else if (strCompare(type, "consumer")) {
 		int index = consumerCount-1;
 		countMutex.unlock();
 		agentUI.newAgent(tableName, type, 0, index);
-		powerConsumption(tableName, index, w);
+		powerConsumption(tableName, index, w, agentUI);
+	}
+
+	else { //no case, unlock mutex and do no thread actions
+		countMutex.unlock();
 	}
 }
 ////// GENERAL THREAD FUNCTIONS END //////
@@ -301,11 +313,10 @@ AgentUI::~AgentUI()
 {
 }
 
-void AgentUI::setPower(double power) {
-	m_power = power;
-	emit powerChanged(m_power);
-}
-
 void AgentUI::newAgent(std::string name, std::string type, double power, int index) {
 	emit addAgentToUI(QString::fromStdString(name), QString::fromStdString(type), power, index);
+}
+
+void AgentUI::setPower(std::string type, int index, double power) {
+	emit powerChanged(QString::fromStdString(type), index, power);
 }
