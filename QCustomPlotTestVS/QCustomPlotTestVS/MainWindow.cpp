@@ -21,20 +21,22 @@ void MainWindow::clicked() {
 	w->show();
 }
 
-void MainWindow::addWidget() {
+void MainWindow::addWidget(QString name, QString type, double power, int index) {
 	//QGridLayout* layout = qobject_cast<QGridLayout*>(ui->agents->layout());
 	QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(ui->agents->layout());
 
+	//add agent to widget
 	QHBoxLayout* agent = new QHBoxLayout(ui->agents);
-	QLabel* agentName = new QLabel("Name", ui->agents);
+	QLabel* agentName = new QLabel(name, ui->agents);
 	agent->addWidget(agentName);
-	QLabel* agentType = new QLabel("Type", ui->agents);
+	QLabel* agentType = new QLabel(type, ui->agents);
 	agent->addWidget(agentType);
-	QLabel* agentPower = new QLabel("Power", ui->agents);
+	QString powerString = QString::number(power);
+	QLabel* agentPower = new QLabel(powerString, ui->agents);
 	agent->addWidget(agentPower);
 
-	QString buttonName = tr("Button #%1").arg(layout->count());
-	QPushButton* button = new QPushButton(buttonName, ui->agents);
-	layout->insertLayout(0, agent);
+
+
+	layout->insertLayout(layout->count()-1, agent);
 	//layout->addWidget(button, 0,0);
 }

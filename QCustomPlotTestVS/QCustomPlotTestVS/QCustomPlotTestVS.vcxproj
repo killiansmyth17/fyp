@@ -109,7 +109,7 @@
     <QtMoc Include="..\..\..\..\..\..\QCustomPlot\qcustomplot.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Bucket.h" />
+    <QtMoc Include="Bucket.h" />
     <QtMoc Include="MainWindow.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="sqlite3.h" />

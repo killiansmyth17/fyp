@@ -10,5 +10,3 @@
 #include "QCustomPlotTestVS.h"
 #include "MainWindow.h"
 #include <QtWidgets/QApplication>
-
-extern MainWindow w;

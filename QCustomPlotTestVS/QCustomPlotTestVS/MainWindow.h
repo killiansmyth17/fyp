@@ -16,5 +16,7 @@ private:
 
 private slots:
 	void clicked();
-	void addWidget();
+
+public slots:
+	void addWidget(QString name, QString type, double power, int index);
 };

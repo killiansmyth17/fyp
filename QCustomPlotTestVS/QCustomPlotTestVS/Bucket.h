@@ -8,6 +8,9 @@
 #include <string>
 #include <functional>
 
+#include "MainWindow.h"
+#include <QObject>
+
 
 //variables
 extern bool wait;
@@ -24,18 +27,35 @@ class Bucket {
 	public:
 
 		//functions
-		void megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data);
+		void megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data);
 		void timer(void);
 
 	private:
 		int getTime();
 		int getTimetable(std::string tableName, Timetable &datamap);
-		void powerConsumption(std::string tableName, int index);
-		void windGeneration(std::string tableName, int index);
-		void solarGeneration(std::string tableName, int index);
+		void powerConsumption(std::string tableName, int index, MainWindow &w);
+		void windGeneration(std::string tableName, int index, MainWindow &w);
+		void solarGeneration(std::string tableName, int index, MainWindow &w);
 		void changeJoules(double joulesTick);
 		void chargeBattery(int intervals);
 		void drainBattery(int intervals);
 		void suspendThread(int milliseconds);
 		int checkInterval(std::function<void(int)> callback, double amount, int lastAction);
+};
+
+class AgentUI : public QObject {
+	Q_OBJECT
+
+	public:
+		AgentUI(QObject* parent = Q_NULLPTR) { m_power = 0; };
+		~AgentUI();
+		void newAgent(std::string name, std::string type, double power, int index);
+		void setPower(double power);
+	private:
+		double m_power;
+		int m_index;
+
+	signals:
+		void powerChanged(double power);
+		void addAgentToUI(QString name, QString type, double power, int index);
 };

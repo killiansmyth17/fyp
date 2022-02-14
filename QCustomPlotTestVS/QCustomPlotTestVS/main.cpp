@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <string> //needed for map as nested character pointers suck
 
-//#include "stdafx.h"
 #include "Bucket.h"
 #include "sqlite3.h"
 
@@ -15,7 +14,7 @@ std::unordered_map<std::string, int> headers;
 std::vector<std::thread> threads;
 
 //callback function for sqlite query, processes SQL data line by line (one line passed into this function at a time)
-static int processAgent(void* NotUsed, int argc, char** argv, char** colName) {
+static int processAgent(void* arg, int argc, char** argv, char** colName) {
 
 	int i;
 	//populate headers map ONCE for robust indexing of data with column headers (first line will be headers)
@@ -32,15 +31,14 @@ static int processAgent(void* NotUsed, int argc, char** argv, char** colName) {
 		data.push_back(argv[i]);
 	}
 
-
-
 	//make thread
-	threads.push_back(std::thread(&Bucket::megaThread, Bucket(), headers, data));
+	MainWindow* w = (MainWindow *)arg;
+	threads.push_back(std::thread(&Bucket::megaThread, Bucket(), std::ref(*w), headers, data));
 
 	return 0;
 }
 
-int createThreads() {
+int createThreads(MainWindow &w) {
 	//Create database connection
 	sqlite3* db; //database connection
 	int rc; //return code 
@@ -54,7 +52,7 @@ int createThreads() {
 	}
 
 	const char* sql = "SELECT * FROM \"Agents\"";
-	rc = sqlite3_exec(db, sql, processAgent, 0, &zErrMsg);
+	rc = sqlite3_exec(db, sql, processAgent, &w, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error: " << zErrMsg << std::endl;
 		sqlite3_free(zErrMsg);
@@ -66,16 +64,17 @@ int createThreads() {
 
 int main(int argc, char *argv[])
 {
+	QApplication a(argc, argv);
+	MainWindow w;
+
 	// Create & kick off threads
-	int rc = createThreads();
+	int rc = createThreads(w);
 	if (rc) return 1;
 
 	// Set up timer thread last, kicks off whole process
 	std::thread timeThread(&Bucket::timer, Bucket());
 	timeThread.detach();
 
-    QApplication a(argc, argv);
-	MainWindow w;
 	w.show();
 
     return a.exec();

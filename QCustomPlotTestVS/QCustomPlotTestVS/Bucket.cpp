@@ -10,7 +10,9 @@
 #include "sqlite3.h"
 //#include "stdafx.h"
 #include "Bucket.h"
+#include "MainWindow.h"
 #include "QCustomPlotTestVS.h"
+#include <QObject>
 
 bool wait = true;
 
@@ -163,7 +165,7 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 }
 
 //power consumption data stored as watts
-void Bucket::powerConsumption(std::string tableName, int index) {
+void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w) {
 	Timetable powerTimetable;
 	getTimetable(tableName, powerTimetable);
 
@@ -180,7 +182,7 @@ void Bucket::powerConsumption(std::string tableName, int index) {
 	}
 }
 
-void Bucket::solarGeneration(std::string tableName, int index) {
+void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w) {
 	Timetable solarTimetable;
 	getTimetable(tableName, solarTimetable);
 
@@ -195,7 +197,7 @@ void Bucket::solarGeneration(std::string tableName, int index) {
 }
 
 //wind data as wind speed, converted using generator defined in this program
-void Bucket::windGeneration(std::string tableName, int index) {
+void Bucket::windGeneration(std::string tableName, int index, MainWindow& w) {
 	Timetable windTimetable;
 	getTimetable(tableName, windTimetable); //datamap passed by reference
 
@@ -253,7 +255,7 @@ void incrementCount(std::string type) {
 }
 
 //Main thread function that represents agents
-void Bucket::megaThread(std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
+void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
 
 	//get the agent type
 	std::string tableName = data_string(headers, data, "Name");
@@ -268,23 +270,42 @@ void Bucket::megaThread(std::unordered_map<std::string, int> headers, std::vecto
 	countMutex.lock(); //need to lock code segment until thread is assigned index
 	incrementCount(type);
 
+	AgentUI agentUI;
+	QObject::connect(&agentUI, &AgentUI::addAgentToUI, &w, &MainWindow::addWidget);
+
 	//kick off agent process
 	if (strCompare(type, "wind")) {
 		int index = windCount-1;
 		countMutex.unlock();
-		windGeneration(tableName, index);
+		agentUI.newAgent(tableName, type, 0, index);
+		windGeneration(tableName, index, w);
 	}
 
 	if (strCompare(type, "solar")) {
 		int index = solarCount-1;
 		countMutex.unlock();
-		solarGeneration(tableName, index);
+		agentUI.newAgent(tableName, type, 0, index);
+		solarGeneration(tableName, index, w);
 	}
 
 	if (strCompare(type, "consumer")) {
 		int index = consumerCount-1;
 		countMutex.unlock();
-		powerConsumption(tableName, index);
+		agentUI.newAgent(tableName, type, 0, index);
+		powerConsumption(tableName, index, w);
 	}
 }
 ////// GENERAL THREAD FUNCTIONS END //////
+
+AgentUI::~AgentUI()
+{
+}
+
+void AgentUI::setPower(double power) {
+	m_power = power;
+	emit powerChanged(m_power);
+}
+
+void AgentUI::newAgent(std::string name, std::string type, double power, int index) {
+	emit addAgentToUI(QString::fromStdString(name), QString::fromStdString(type), power, index);
+}
