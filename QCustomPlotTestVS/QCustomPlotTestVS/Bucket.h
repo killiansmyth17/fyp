@@ -30,14 +30,10 @@ public:
 	~AgentUI() {};
 	void newAgent(std::string name, std::string type, double power, int index);
 	void setPower(std::string type, int index, double power);
-	static bool wait; //for wait for user input
 
 signals:
 	void addAgentToUI(QString name, QString type, double power, int index);
 	void powerChanged(QString type, int index, double power);
-
-public slots:
-	void setWait();
 };
 
 

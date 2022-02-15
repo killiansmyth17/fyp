@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "QCustomPlotTestVS.h"
 
+int maxTick = 0;
+
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -8,6 +10,12 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->setupUi(this);
 	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(clicked()));
 	connect(ui->addWidgetButton, SIGNAL(clicked()), this, SLOT(addWidget()));
+
+	QInputDialog inputDialog;
+	bool ok = false;
+	while (!ok) {
+		maxTick = inputDialog.getInt(0, "Input dialog", "Date of Birth:", 0, 0, 10000, 1, &ok);
+	}
 }
 
 MainWindow::~MainWindow()
@@ -45,9 +53,7 @@ void MainWindow::changePower(QString type, int index, double power) {
 	QString objectName = type + QString::number(index);
 	QLabel* powerLabel = ui->agents->findChild<QLabel*>(objectName);
 	QString powerString = QString::number(power);
-	powerLabel->setText(powerString);
-}
-
-void MainWindow::userHasInput() {
-	emit endWait();
+	if(powerLabel) { //not null
+		powerLabel->setText(powerString);
+	}
 }

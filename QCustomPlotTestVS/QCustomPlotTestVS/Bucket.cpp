@@ -14,7 +14,7 @@
 #include "QCustomPlotTestVS.h"
 #include <QObject>
 
-bool AgentUI::wait = true; //static variable, set to false
+bool once = false;
 
 int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)
 int ticksPerAction = 10; //one action every 10 ticks, multiply watts by 60 to get joules
@@ -262,9 +262,8 @@ void incrementCount(std::string type) {
 	}
 }
 
-void waitForUserInput(AgentUI &agentUI, MainWindow &w) {
-	QObject::connect(&w, &MainWindow::endWait, &agentUI, &AgentUI::setWait);
-	while (agentUI.wait) {
+void waitForUserInput() {
+	while (maxTick==0) {
 		suspendThread(100);
 	}
 }
@@ -276,42 +275,31 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 	std::string tableName = data_string(headers, data, "Name");
 	std::string type = data_string(headers, data, "Type");
 
-	//set up time tracking variables
-	//int chargeBatteryTick = 0;
-	//int drainBatteryTick = 0;
-
-	//using namespace std::placeholders; //for _1
-
 	countMutex.lock(); //need to lock code segment until thread is assigned index
 	incrementCount(type);
 
 	AgentUI agentUI;
-
-	if (agentUI.wait) {
-		waitForUserInput(agentUI, w);
-	}
-
 	QObject::connect(&agentUI, &AgentUI::addAgentToUI, &w, &MainWindow::addWidget);
 
 	//kick off agent process
 	if (strCompare(type, "wind")) {
 		int index = windCount-1;
-		countMutex.unlock();
 		agentUI.newAgent(tableName, type, 0, index);
+		countMutex.unlock();
 		windGeneration(tableName, index, w, agentUI);
 	}
 
 	else if (strCompare(type, "solar")) {
 		int index = solarCount-1;
-		countMutex.unlock();
 		agentUI.newAgent(tableName, type, 0, index);
+		countMutex.unlock();
 		solarGeneration(tableName, index, w, agentUI);
 	}
 
 	else if (strCompare(type, "consumer")) {
 		int index = consumerCount-1;
-		countMutex.unlock();
 		agentUI.newAgent(tableName, type, 0, index);
+		countMutex.unlock();
 		powerConsumption(tableName, index, w, agentUI);
 	}
 
@@ -320,12 +308,6 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 	}
 }
 ////// GENERAL THREAD FUNCTIONS END //////
-
-
-
-void AgentUI::setWait() {
-	this->wait = false;
-}
 
 void AgentUI::newAgent(std::string name, std::string type, double power, int index) {
 	emit addAgentToUI(QString::fromStdString(name), QString::fromStdString(type), power, index);

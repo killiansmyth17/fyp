@@ -3,6 +3,8 @@
 #include <QMainWindow>
 #include "ui_MainWindow.h"
 
+extern int maxTick;
+
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -13,10 +15,6 @@ public:
 
 private:
 	Ui::MainWindow* ui;
-	void userHasInput();
-
-signals:
-	void endWait();
 
 private slots:
 	void clicked();

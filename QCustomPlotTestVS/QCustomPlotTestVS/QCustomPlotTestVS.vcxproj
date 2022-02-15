@@ -33,6 +33,7 @@
     <QtInstall>6.0.0_msvc2019_64</QtInstall>
     <QtModules>core;gui;widgets;printsupport;printsupport</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
+    <QtQMLDebugEnable>true</QtQMLDebugEnable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>6.0.0_msvc2019_64</QtInstall>
