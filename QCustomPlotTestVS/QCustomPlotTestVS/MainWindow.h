@@ -13,6 +13,10 @@ public:
 
 private:
 	Ui::MainWindow* ui;
+	void userHasInput();
+
+signals:
+	void endWait();
 
 private slots:
 	void clicked();

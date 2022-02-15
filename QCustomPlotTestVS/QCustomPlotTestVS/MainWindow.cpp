@@ -41,10 +41,13 @@ void MainWindow::addWidget(QString name, QString type, double power, int index) 
 	//layout->addWidget(button, 0,0);
 }
 
-
 void MainWindow::changePower(QString type, int index, double power) {
 	QString objectName = type + QString::number(index);
 	QLabel* powerLabel = ui->agents->findChild<QLabel*>(objectName);
 	QString powerString = QString::number(power);
 	powerLabel->setText(powerString);
+}
+
+void MainWindow::userHasInput() {
+	emit endWait();
 }

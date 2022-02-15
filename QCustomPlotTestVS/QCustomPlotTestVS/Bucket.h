@@ -27,13 +27,17 @@ class AgentUI : public QObject {
 
 public:
 	AgentUI(QObject* parent = Q_NULLPTR) {};
-	~AgentUI();
+	~AgentUI() {};
 	void newAgent(std::string name, std::string type, double power, int index);
 	void setPower(std::string type, int index, double power);
+	static bool wait; //for wait for user input
 
 signals:
 	void addAgentToUI(QString name, QString type, double power, int index);
 	void powerChanged(QString type, int index, double power);
+
+public slots:
+	void setWait();
 };
 
 
@@ -54,6 +58,5 @@ class Bucket {
 		void changeJoules(double joulesTick);
 		void chargeBattery(int intervals);
 		void drainBattery(int intervals);
-		void suspendThread(int milliseconds);
 		int checkInterval(std::function<void(int)> callback, double amount, int lastAction);
 };

@@ -14,7 +14,7 @@
 #include "QCustomPlotTestVS.h"
 #include <QObject>
 
-bool wait = true;
+bool AgentUI::wait = true; //static variable, set to false
 
 int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)
 int ticksPerAction = 10; //one action every 10 ticks, multiply watts by 60 to get joules
@@ -82,7 +82,7 @@ void Bucket::drainBattery(int intervals) {
 
 
 ////// GENERAL THREAD FUNCTIONS BEGIN //////
-void Bucket::suspendThread(int milliseconds) {
+void suspendThread(int milliseconds) {
 	std::chrono::milliseconds timespan(milliseconds);
 	std::this_thread::sleep_for(timespan);
 }
@@ -262,6 +262,13 @@ void incrementCount(std::string type) {
 	}
 }
 
+void waitForUserInput(AgentUI &agentUI, MainWindow &w) {
+	QObject::connect(&w, &MainWindow::endWait, &agentUI, &AgentUI::setWait);
+	while (agentUI.wait) {
+		suspendThread(100);
+	}
+}
+
 //Main thread function that represents agents
 void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
 
@@ -279,6 +286,11 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 	incrementCount(type);
 
 	AgentUI agentUI;
+
+	if (agentUI.wait) {
+		waitForUserInput(agentUI, w);
+	}
+
 	QObject::connect(&agentUI, &AgentUI::addAgentToUI, &w, &MainWindow::addWidget);
 
 	//kick off agent process
@@ -309,8 +321,10 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 }
 ////// GENERAL THREAD FUNCTIONS END //////
 
-AgentUI::~AgentUI()
-{
+
+
+void AgentUI::setWait() {
+	this->wait = false;
 }
 
 void AgentUI::newAgent(std::string name, std::string type, double power, int index) {
