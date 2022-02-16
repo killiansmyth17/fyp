@@ -48,11 +48,10 @@ class Bucket {
 	private:
 		int getTime();
 		int getTimetable(std::string tableName, Timetable &datamap);
+		void addPowerToVector(double powerConsumption, std::vector<double>& totalVector);
 		void powerConsumption(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
-		void changeJoules(double joulesTick);
-		void chargeBattery(int intervals);
-		void drainBattery(int intervals);
+		void chargeBattery(double intervals);
 		int checkInterval(std::function<void(int)> callback, double amount, int lastAction);
 };
