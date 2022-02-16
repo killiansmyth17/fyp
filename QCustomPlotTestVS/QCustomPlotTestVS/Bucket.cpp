@@ -17,7 +17,7 @@
 bool once = false;
 
 int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)
-int ticksPerAction = 10; //one action every 10 ticks, multiply watts by 60 to get joules
+int waitTime = 20; //wait 20 milliseconds per agent action
 
 double joules = 0; //joules in battery (kJ for now)
 double batteryCapacity = 50000;
@@ -26,9 +26,11 @@ double batteryCapacity = 50000;
 int windCount = 0;
 int solarCount = 0;
 int consumerCount = 0;
-std::vector<double> latestWindPower;
-std::vector<double> latestSolarPower;
-std::vector<double> latestPowerConsumption;
+
+std::mutex totalMutex;
+std::vector<double> totalWindPower;
+std::vector<double> totalSolarPower;
+std::vector<double> totalPowerConsumption;
 
 std::mutex joulesMutex;
 std::mutex countMutex;
@@ -49,35 +51,13 @@ std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW T
 	{"k", 0.01785714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
 };
 
-//std::unordered_map<std::string, double> solarPanel{
-
-//};
-////// GENERATOR SPECS END //////
 
 
-
-////// MUTEX FUNCTIONS BEGIN //////
-void Bucket::changeJoules(double joulesTick) {
+void Bucket::chargeBattery(double thisJoules) {
 	joulesMutex.lock();
-
-	joules = std::min(joules+joulesTick, batteryCapacity);
-	std::cout << joules << " joules of energy in the battery\n" << std::endl;
-
+	joules = std::min(joules + thisJoules, batteryCapacity); //cap out battery
 	joulesMutex.unlock();
 }
-////// MUTEX FUNCTIONS END //////
-
-
-
-////// AGENT ACTION FUNCTIONS BEGIN //////
-void Bucket::chargeBattery(int intervals) {
-	changeJoules(intervals * 1);
-}
-
-void Bucket::drainBattery(int intervals) {
-	changeJoules(intervals * -1);
-}
-////// AGENT ACTION FUNCTIONS END //////
 
 
 
@@ -88,8 +68,8 @@ void suspendThread(int milliseconds) {
 }
 
 void Bucket::timer(void) {
-	while (true) {
-		suspendThread(100);
+	while (tick < maxTick+1) { //simulate for [user input] ticks (+1 to account for incrementing to 1 first, agents must wait for tick==1 before starting)
+		suspendThread(300); //one tick every 300ms
 		tick++;
 	}
 }
@@ -106,23 +86,9 @@ int Bucket::getTime() {
 	return time;
 }
 
-//Check if enough time has passed for action to happen
-int Bucket::checkInterval(std::function<void(int)> callback, double amount, int lastAction) {
-	int tickdiff = tick - lastAction;
-
-	if (tickdiff > ticksPerAction) {
-		double seconds = ticksPerAction * 6; //1 tick represents 6 seconds
-
-		int intervals = tickdiff / ticksPerAction;
-		callback(intervals*amount*seconds);
-		return lastAction += ticksPerAction;
-	}
-
-	return lastAction;
-}
-
+//callback function for sqlite3 query, puts data in 2D vector
 static int handleData(void* data, int argc, char** argv, char** colName) {
-	Vector2D* records = static_cast<Vector2D*>(data);
+	Vector2D* records = static_cast<Vector2D*>(data); //cast void* back to Vector2D*
 	try {
 		records->emplace_back(argv, argv + argc);
 	}
@@ -133,6 +99,7 @@ static int handleData(void* data, int argc, char** argv, char** colName) {
 	return 0;
 }
 
+//get power data for agent, timetable passed by reference
 int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 
 	//Create database connection
@@ -148,7 +115,7 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 
 	Vector2D data;
 	std::string query ("SELECT * FROM \""+tableName+"\"");
-	rc = sqlite3_exec(db, query.c_str(), handleData, &data, &zErrMsg);
+	rc = sqlite3_exec(db, query.c_str(), handleData, &data, &zErrMsg); //execute query with callback function to handle data passed as pointer
 	if (rc != SQLITE_OK) {
 		 std::cerr << "SQL error: " << zErrMsg << std::endl;
 		 sqlite3_free(zErrMsg);
@@ -156,12 +123,23 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 
 	sqlite3_close(db); //close db connection
 
+	//map time as index to data (power) as double -> power consumption at time x = y
 	for (int i = 0; i < data.size(); i++) {
 		int index = std::stoi(data[i][0]);
 		datamap[index] = std::stod(data[i][1]);
 	}
 
 	return 0;
+}
+
+//Add power for one agent to total per tick for plotting purposes
+void Bucket::addPowerToVector(double power, std::vector<double> &totalVector) {
+
+	totalMutex.lock();
+	else {
+		totalVector[tick-1] += power;
+	}
+	totalMutex.unlock();
 }
 
 //power consumption data stored as watts
@@ -171,16 +149,28 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 
 	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
-	int lastAction = 0;
+	while (tick < 1) { //wait for tick to increment once before commencing
+		suspendThread(20);
+	}
+	
+	totalMutex.lock();
+	if (totalPowerConsumption.size() == 0) { //set vector size ONCE
+		totalPowerConsumption.reserve(maxTick);
+	}
+	totalMutex.unlock();
 
-	while (true) {
+	int lastTick = 0;
+	while (tick<maxTick) {
 		double powerConsumption = powerTimetable[getTime()]/1000; //in kiloWatts
 		agentUI.setPower("consumer", index, powerConsumption);
 
-		latestPowerConsumption[index] = powerConsumption;
+		if (tick > lastTick) { //once per agent per tick
+			lastTick = tick;
+			addPowerToVector(powerConsumption, totalPowerConsumption);
+		}
 
-		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), powerConsumption*-60, lastAction);
-		suspendThread(100); //sleep for performance
+		chargeBattery(powerConsumption*-60); //each action represents 1 minute
+		suspendThread(waitTime);
 	}
 }
 
@@ -190,8 +180,14 @@ void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, Ag
 
 	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
-	int lastAction = 0;
 
+	totalMutex.lock();
+	if (totalSolarPower.size() == 0) { //set vector size ONCE
+		totalSolarPower.reserve(maxTick);
+	}
+	totalMutex.unlock();
+
+	int lastTick = 0;
 	while (true) {
 		double solarGeneration = solarTimetable[getTime()];
 
@@ -207,9 +203,14 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 
 	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
-	int lastAction = 0;
-	
-	while (true) {
+	totalMutex.lock();
+	if (totalWindPower.size() == 0) { //set vector size ONCE
+		totalWindPower.reserve(maxTick);
+	}
+	totalMutex.unlock();
+
+	int lastTick = 0;
+	while (tick<maxTick) {
 
 		double windSpeed = windTimetable[getTime()];
 
@@ -223,12 +224,17 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
 		}
 
+		if (tick > lastTick) { //once per agent per tick
+			lastTick = tick;
+			addPowerToVector(windPower, totalWindPower);
+		}
+
 		agentUI.setPower("wind", index, windPower);
 
 		latestWindPower[index] = windPower; //update graphing value with latest data
 
-		lastAction = checkInterval(std::bind(&Bucket::chargeBattery, this, std::placeholders::_1), windPower*60, lastAction);
-		suspendThread(100); //sleep for performance
+		chargeBattery(windPower * 60); //each agent action represents 1 minute
+		suspendThread(waitTime);
 	}
 }
 
