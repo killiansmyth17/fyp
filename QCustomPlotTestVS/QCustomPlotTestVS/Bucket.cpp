@@ -132,13 +132,22 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 	return 0;
 }
 
+//gen-purpose set vector size function (& init all vals to 0)
+void Bucket::setVecSize(std::vector<double> &totalVector) {
+	totalMutex.lock();
+	if (totalVector.size() == 0) { //set vector size ONCE
+		totalVector.resize(maxTick);
+		for (int i = 0; i < maxTick; i++) {
+			totalVector[i] = 0;
+		}
+	}
+	totalMutex.unlock();
+}
+
 //Add power for one agent to total per tick for plotting purposes
 void Bucket::addPowerToVector(double power, std::vector<double> &totalVector) {
-
 	totalMutex.lock();
-	else {
-		totalVector[tick-1] += power;
-	}
+	totalVector[tick-1] += power;
 	totalMutex.unlock();
 }
 
@@ -153,11 +162,7 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 		suspendThread(20);
 	}
 	
-	totalMutex.lock();
-	if (totalPowerConsumption.size() == 0) { //set vector size ONCE
-		totalPowerConsumption.reserve(maxTick);
-	}
-	totalMutex.unlock();
+	setVecSize(totalPowerConsumption);
 
 	int lastTick = 0;
 	while (tick<maxTick) {
@@ -180,12 +185,7 @@ void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, Ag
 
 	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
-
-	totalMutex.lock();
-	if (totalSolarPower.size() == 0) { //set vector size ONCE
-		totalSolarPower.reserve(maxTick);
-	}
-	totalMutex.unlock();
+	setVecSize(totalSolarPower);
 
 	int lastTick = 0;
 	while (true) {
@@ -203,11 +203,7 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 
 	QObject::connect(&agentUI, &AgentUI::powerChanged, &w, &MainWindow::changePower);
 
-	totalMutex.lock();
-	if (totalWindPower.size() == 0) { //set vector size ONCE
-		totalWindPower.reserve(maxTick);
-	}
-	totalMutex.unlock();
+	setVecSize(totalWindPower);
 
 	int lastTick = 0;
 	while (tick<maxTick) {
@@ -230,8 +226,6 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 		}
 
 		agentUI.setPower("wind", index, windPower);
-
-		latestWindPower[index] = windPower; //update graphing value with latest data
 
 		chargeBattery(windPower * 60); //each agent action represents 1 minute
 		suspendThread(waitTime);
@@ -259,12 +253,10 @@ boolean strCompare(std::string str, std::string comp) {
 void incrementCount(std::string type) {
 	if (strCompare(type, "wind")) {
 		windCount++;
-		latestWindPower.push_back(0);
 	}
 
 	if (strCompare(type, "consumer")) {
 		consumerCount++;
-		latestPowerConsumption.push_back(0);
 	}
 }
 

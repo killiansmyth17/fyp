@@ -16,8 +16,9 @@
 extern bool wait;
 extern int tick;
 extern double joules;
-extern std::vector<double> latestWindPower;
-extern std::vector<double> latestPowerConsumption;
+extern std::vector<double> totalWindPower;
+extern std::vector<double> totalSolarPower;
+extern std::vector<double> totalPowerConsumption;
 
 //alias for timetable datatype
 using Timetable = std::unordered_map<int, double>;
@@ -48,10 +49,11 @@ class Bucket {
 	private:
 		int getTime();
 		int getTimetable(std::string tableName, Timetable &datamap);
+		void setVecSize(std::vector<double>& totalVector);
 		void addPowerToVector(double powerConsumption, std::vector<double>& totalVector);
 		void powerConsumption(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void chargeBattery(double intervals);
-		int checkInterval(std::function<void(int)> callback, double amount, int lastAction);
+		//int checkInterval(std::function<void(int)> callback, double amount, int lastAction);
 };

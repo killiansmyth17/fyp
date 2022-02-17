@@ -12,9 +12,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui->addWidgetButton, SIGNAL(clicked()), this, SLOT(addWidget()));
 
 	QInputDialog inputDialog;
-	bool ok = false;
-	while (!ok) {
-		maxTick = inputDialog.getInt(0, "Input dialog", "Date of Birth:", 0, 0, 10000, 1, &ok);
+	bool ok;
+	maxTick = inputDialog.getInt(0, "Input dialog", "Time to run:", 0, 0, 10000, 1, &ok);
+	if (!ok) {
+		abort();
 	}
 }
 
@@ -24,7 +25,7 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::clicked() {
-	this->close();
+	//this->close();
 	QCustomPlotTestVS* w = new QCustomPlotTestVS(this);
 	w->show();
 }
