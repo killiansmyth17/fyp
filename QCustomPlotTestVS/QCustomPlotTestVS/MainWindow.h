@@ -17,7 +17,7 @@ private:
 	Ui::MainWindow* ui;
 
 private slots:
-	void clicked();
+	void showGraph();
 
 public slots:
 	void addWidget(QString name, QString type, double power, int index);
