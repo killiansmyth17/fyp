@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
-	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(clicked()));
+	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(showGraph()));
 	connect(ui->addWidgetButton, SIGNAL(clicked()), this, SLOT(addWidget()));
 
 	QInputDialog inputDialog;
@@ -24,7 +24,7 @@ MainWindow::~MainWindow()
 	delete ui;
 }
 
-void MainWindow::clicked() {
+void MainWindow::showGraph() {
 	//this->close();
 	QCustomPlotTestVS* w = new QCustomPlotTestVS(this);
 	w->show();

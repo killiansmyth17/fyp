@@ -41,19 +41,15 @@ signals:
 class Bucket {
 
 	public:
-
-		//functions
 		void megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data);
 		void timer(void);
 
 	private:
-		int getTime();
 		int getTimetable(std::string tableName, Timetable &datamap);
 		void setVecSize(std::vector<double>& totalVector);
-		void addPowerToVector(double powerConsumption, std::vector<double>& totalVector);
+		void addPowerToVector(double powerConsumption, std::vector<double>& totalVector, int index);
 		void powerConsumption(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void chargeBattery(double intervals);
-		//int checkInterval(std::function<void(int)> callback, double amount, int lastAction);
 };

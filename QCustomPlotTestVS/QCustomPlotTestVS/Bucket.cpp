@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <functional> //for callbacks using class member
+#include <math.h> //for pi
 
 #include "sqlite3.h"
 //#include "stdafx.h"
@@ -43,12 +44,16 @@ using Vector2D = std::vector<Vector1D>;
 using Timetable = std::unordered_map<int, double>;
 
 ////// GENERATOR SPECS BEGIN //////
-std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW Turbine
+/*std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW Turbine
 	{"ratedPower", 3.5}, //kiloWatts, tied to k => turbine specs divided by 1000, not the real turbine
 	{"ratedWindSpeed", 14},
 	{"cutOut", 30},
 	{"cutIn", 2},
 	{"k", 0.01785714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
+};*/
+
+std::unordered_map<std::string, double> windTurbine{
+	{"bladeLength", 1} //metres
 };
 
 
@@ -72,18 +77,6 @@ void Bucket::timer(void) {
 		suspendThread(300); //one tick every 300ms
 		tick++;
 	}
-}
-
-//hacky way to convert ticks to 24 hour clock as int for database querying
-int Bucket::getTime() {
-	int time = tick / 10; //first divide by 10 to get minutes (1 tick = 0.1 min)
-	time = time % 1440; //24 hours * 60 = 1440 minutes -> 24 hour wrap
-	int minutes = time % 60; //then mod 60 to find minutes and subtract
-	time /= 60; //then div 60 to find hours
-	time *= 100; //then multiply hours by 100 to open up two rightmost digits for minutes
-	minutes -= (minutes % 15); //round minutes to nearest 15 minute floor increment
-	time += minutes; //then add minutes
-	return time;
 }
 
 //callback function for sqlite3 query, puts data in 2D vector
@@ -145,9 +138,9 @@ void Bucket::setVecSize(std::vector<double> &totalVector) {
 }
 
 //Add power for one agent to total per tick for plotting purposes
-void Bucket::addPowerToVector(double power, std::vector<double> &totalVector) {
+void Bucket::addPowerToVector(double power, std::vector<double> &totalVector, int index) {
 	totalMutex.lock();
-	totalVector[tick-1] += power;
+	totalVector[index] += power;
 	totalMutex.unlock();
 }
 
@@ -166,12 +159,12 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 
 	int lastTick = 0;
 	while (tick<maxTick) {
-		double powerConsumption = powerTimetable[getTime()]/1000; //in kiloWatts
+		double powerConsumption = powerTimetable[tick];
 		agentUI.setPower("consumer", index, powerConsumption);
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
-			addPowerToVector(powerConsumption, totalPowerConsumption);
+			addPowerToVector(powerConsumption, totalPowerConsumption, tick-1);
 		}
 
 		chargeBattery(powerConsumption*-60); //each action represents 1 minute
@@ -189,7 +182,7 @@ void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, Ag
 
 	int lastTick = 0;
 	while (true) {
-		double solarGeneration = solarTimetable[getTime()];
+		double solarGeneration = solarTimetable[tick];
 
 		double solarPower = 0; //TODO
 		agentUI.setPower("solar", index, solarPower);
@@ -205,24 +198,31 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 
 	setVecSize(totalWindPower);
 
+	double efficiency = 1; //no clue
+	double airDensity = 1.225; //kg/m^3 according to the International Standard Atmosphere (ISA) values—15° C at sea level with dry air
+	double bladeLength = windTurbine["bladeLength"]; //metres
+	double generatorArea = M_PI * bladeLength * bladeLength; //pi*r^2
+
 	int lastTick = 0;
 	while (tick<maxTick) {
+		double windSpeed = windTimetable[tick];
 
-		double windSpeed = windTimetable[getTime()];
+		//P = (efficieny * density of air * area of wind generator * windspeed^3)/3
+		double windPower = efficiency * airDensity * generatorArea * windSpeed * windSpeed * windSpeed;
 
 		//calculate power generation from wind speed (generator has cut out and cut in ratings, as well as rated speed, all need to be taken into account)
-		double windPower;
+		/*
 		if (windSpeed > windTurbine["cutOut"] || windSpeed < windTurbine["cutIn"]) { //if turbine can't turn
 			windPower = 0;
 		} else if (windSpeed > windTurbine["ratedWindSpeed"]) { // power gen caps at ratedPower when ratedWindSpeed is reached
 			windPower = windTurbine["ratedPower"];
 		} else {
 			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
-		}
+		}*/
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
-			addPowerToVector(windPower, totalWindPower);
+			addPowerToVector(windPower, totalWindPower, tick-1);
 		}
 
 		agentUI.setPower("wind", index, windPower);
