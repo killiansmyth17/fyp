@@ -22,4 +22,5 @@ private slots:
 public slots:
 	void addWidget(QString name, QString type, double power, int index);
 	void changePower(QString type, int index, double power);
+	void updateProgressBar();
 };

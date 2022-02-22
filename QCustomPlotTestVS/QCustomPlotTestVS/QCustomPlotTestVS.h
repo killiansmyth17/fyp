@@ -29,7 +29,7 @@ private:
 	void appendPoints(QVector<double>& y, std::vector<double>& data);
 	void appendXAxis(QVector<double>& x, int size);
 
-//private slots:
+private slots:
 	//void plotPerSecond();
 	//void on_btn_add_clicked();
 	//void horzScrollBarChanged(int value);

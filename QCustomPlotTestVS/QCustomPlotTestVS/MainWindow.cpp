@@ -9,7 +9,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui->setupUi(this);
 	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(showGraph()));
-	connect(ui->addWidgetButton, SIGNAL(clicked()), this, SLOT(addWidget()));
 
 	QInputDialog inputDialog;
 	bool ok;
@@ -57,4 +56,8 @@ void MainWindow::changePower(QString type, int index, double power) {
 	if(powerLabel) { //not null
 		powerLabel->setText(powerString);
 	}
+}
+
+void MainWindow::updateProgressBar() {
+	ui->progressBar->setValue((int)(((double)(tick-1)/(double)maxTick)*100.0));
 }
