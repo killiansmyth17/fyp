@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 	if (rc) return 1;
 
 	// Set up timer thread last, kicks off whole process
-	std::thread timeThread(&Bucket::timer, Bucket());
+	std::thread timeThread(&Bucket::timer, Bucket(), std::ref(w));
 	timeThread.detach();
 
 	w.show();

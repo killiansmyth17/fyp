@@ -72,10 +72,14 @@ void suspendThread(int milliseconds) {
 	std::this_thread::sleep_for(timespan);
 }
 
-void Bucket::timer(void) {
+void Bucket::timer(MainWindow& w) {
+	AgentUI agentUI;
+	QObject::connect(&agentUI, &AgentUI::timeChanged, &w, &MainWindow::updateProgressBar);
 	while (tick < maxTick+1) { //simulate for [user input] ticks (+1 to account for incrementing to 1 first, agents must wait for tick==1 before starting)
 		suspendThread(300); //one tick every 300ms
 		tick++;
+
+		agentUI.timeChanged();
 	}
 }
 

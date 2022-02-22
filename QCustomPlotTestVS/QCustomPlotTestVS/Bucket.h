@@ -35,6 +35,7 @@ public:
 signals:
 	void addAgentToUI(QString name, QString type, double power, int index);
 	void powerChanged(QString type, int index, double power);
+	void timeChanged();
 };
 
 
@@ -42,7 +43,7 @@ class Bucket {
 
 	public:
 		void megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data);
-		void timer(void);
+		void timer(MainWindow &w);
 
 	private:
 		int getTimetable(std::string tableName, Timetable &datamap);
