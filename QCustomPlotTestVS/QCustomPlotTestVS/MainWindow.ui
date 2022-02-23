@@ -26,7 +26,7 @@
          <item>
           <widget class="QLabel" name="label">
            <property name="text">
-            <string>Agent</string>
+            <string>Data</string>
            </property>
           </widget>
          </item>
