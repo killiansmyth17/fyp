@@ -8,7 +8,7 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 {
     ui->setupUi(this);
 
-	ui->plot->xAxis->setLabel("Ticks (minutes)");
+	ui->plot->xAxis->setLabel("Ticks (15 minute segments)");
 	ui->plot->yAxis->setLabel("Power (watts)");
 	ui->plot->legend->setVisible(true);
 
