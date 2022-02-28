@@ -47,10 +47,13 @@ class Bucket {
 
 	private:
 		int getTimetable(std::string tableName, Timetable &datamap);
+		int getBattery(std::string tableName, Battery& datamap);
 		void setVecSize(std::vector<double>& totalVector);
 		void addPowerToVector(double powerConsumption, std::vector<double>& totalVector, int index);
 		void powerConsumption(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
+		void regularBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI);
+		void smartBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI);
 		void chargeBattery(double intervals);
 };

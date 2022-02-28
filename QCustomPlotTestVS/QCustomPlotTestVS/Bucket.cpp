@@ -20,13 +20,14 @@ bool once = false;
 int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)
 int waitTime = 20; //wait 20 milliseconds per agent action
 
-double joules = 0; //joules in battery (kJ for now)
+double joules = 0; //joules in battery
 double batteryCapacity = 50000;
 
 //graphing values:
 int windCount = 0;
 int solarCount = 0;
 int consumerCount = 0;
+//int batteryCount = 0;
 
 std::mutex totalMutex;
 std::vector<double> totalWindPower;
@@ -42,6 +43,7 @@ using Vector2D = std::vector<Vector1D>;
 
 //alias for timetable datatype
 using Timetable = std::unordered_map<int, double>;
+using Battery = std::unordered_map<std::string, double>;
 
 ////// GENERATOR SPECS BEGIN //////
 /*std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW Turbine
@@ -87,6 +89,9 @@ void Bucket::timer(MainWindow& w) {
 static int handleData(void* data, int argc, char** argv, char** colName) {
 	Vector2D* records = static_cast<Vector2D*>(data); //cast void* back to Vector2D*
 	try {
+		if (records->size() == 0) {
+			records->emplace_back(colName, colName + argc); //add column headers to first index
+		}
 		records->emplace_back(argv, argv + argc);
 	}
 	catch (...) {
@@ -121,9 +126,45 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 	sqlite3_close(db); //close db connection
 
 	//map time as index to data (power) as double -> power consumption at time x = y
-	for (int i = 0; i < data.size(); i++) {
+	for (int i = 1; i < data.size(); i++) { //skip 0 index because no need for headers
 		int index = std::stoi(data[i][0]);
 		datamap[index] = std::stod(data[i][1]);
+	}
+
+	return 0;
+}
+
+//get capacity and charging rate data for battery
+int Bucket::getBattery(std::string tableName, Battery& datamap) {
+	//Create database connection
+	sqlite3* db; //database connection
+	int rc; //return code 
+	char* zErrMsg = 0;
+
+	rc = sqlite3_open("Agents.db", &db);
+	if (rc) {
+		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+		sqlite3_close(db);
+	}
+
+	Vector2D data;
+	std::string query("SELECT * FROM \"" + tableName + "\"");
+	rc = sqlite3_exec(db, query.c_str(), handleData, &data, &zErrMsg); //execute query with callback function to handle data passed as pointer
+	if (rc != SQLITE_OK) {
+		std::cerr << "SQL error: " << zErrMsg << std::endl;
+		sqlite3_free(zErrMsg);
+	}
+
+	sqlite3_close(db); //close db connection
+
+	//map time as index to data (power) as double -> power consumption at time x = y
+	
+	std::vector<std::string> headers;
+	for (int i = 0; i < data[0].size(); i++) {
+		headers.push_back(data[0][i]);
+	}
+	for (int i = 0; i < data[1].size(); i++) {
+		datamap[headers[i]] = stod(data[1][i]);
 	}
 
 	return 0;
@@ -236,6 +277,41 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 	}
 }
 
+//regular batteries take power from the system with no regard to any external factors
+void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI) {
+	//get battery data
+	Battery battery;
+	getBattery(tableName, battery);
+
+	double batteryPower = 0; //current charge
+
+	while (tick < 1) { //wait for tick to increment once before commencing
+		suspendThread(20);
+	}
+
+	setVecSize(totalPowerConsumption);
+
+	int lastTick = 0;
+	while (tick < maxTick) {
+		if (tick > lastTick) { //once per agent per tick
+			lastTick = tick;
+			addPowerToVector(battery[], totalPowerConsumption, tick - 1);
+		}
+
+		double power = battery["power"] * 60; //each action represents 1 minute
+		batteryPower += power; //charge battery
+		chargeBattery(power * -1); 
+		suspendThread(waitTime);
+	}
+}
+
+//smart batteries
+void Bucket::smartBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI) {
+	//get battery data
+	Battery battery;
+	getBattery(tableName, battery);
+}
+
 
 
 int data_stoi(std::unordered_map<std::string, int> headers, std::vector<std::string> data, std::string query) {
@@ -303,6 +379,18 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		powerConsumption(tableName, index, w, agentUI);
+	}
+
+	else if (strCompare(type, "regular battery")) {
+		int index = consumerCount-1;
+		countMutex.unlock();
+		regularBattery(tableName, type, w, agentUI);
+	}
+
+	else if (strCompare(type, "smart battery")) {
+		int index = consumerCount - 1;
+		countMutex.unlock();
+		smartBattery(tableName, type, w, agentUI);
 	}
 
 	else { //no case, unlock mutex and do no thread actions
