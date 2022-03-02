@@ -182,7 +182,7 @@ void Bucket::setVecSize(std::vector<double> &totalVector) {
 	totalMutex.unlock();
 }
 
-//Add power for one agent to total per tick for plotting purposes
+//Add power for one agent to total per tick for plotting purposes, in a function because of mutex lock
 void Bucket::addPowerToVector(double power, std::vector<double> &totalVector, int index) {
 	totalMutex.lock();
 	totalVector[index] += power;
@@ -283,6 +283,8 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 	Battery battery;
 	getBattery(tableName, battery);
 
+	QObject::connect(&agentUI, &AgentUI::batteryChanged, &w, &MainWindow::updateBattery);
+
 	double batteryPower = 0; //current charge
 
 	while (tick < 1) { //wait for tick to increment once before commencing
@@ -293,13 +295,17 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 
 	int lastTick = 0;
 	while (tick < maxTick) {
+		double power = battery["Power"] * 60; //each action represents 1 minute
+
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
-			addPowerToVector(battery[], totalPowerConsumption, tick - 1);
+			addPowerToVector(power, totalPowerConsumption, tick - 1);
 		}
 
-		double power = battery["power"] * 60; //each action represents 1 minute
+		batteryPower = std::min(batteryPower + power, battery["Capacity"]);
 		batteryPower += power; //charge battery
+
+		agentUI.updateBattery(index, batteryPower, battery["Capacity"]);
 		chargeBattery(power * -1); 
 		suspendThread(waitTime);
 	}
@@ -327,19 +333,6 @@ boolean strCompare(std::string str, std::string comp) {
 	return str.compare(comp) == 0;
 }
 
-
-
-//increments thread count and expands vector by 1
-void incrementCount(std::string type) {
-	if (strCompare(type, "wind")) {
-		windCount++;
-	}
-
-	if (strCompare(type, "consumer")) {
-		consumerCount++;
-	}
-}
-
 void waitForUserInput() {
 	while (maxTick==0) {
 		suspendThread(100);
@@ -354,43 +347,44 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 	std::string type = data_string(headers, data, "Type");
 
 	countMutex.lock(); //need to lock code segment until thread is assigned index
-	incrementCount(type);
 
 	AgentUI agentUI;
 	QObject::connect(&agentUI, &AgentUI::addAgentToUI, &w, &MainWindow::addWidget);
+	QObject::connect(&agentUI, &AgentUI::addBatteryToUI, &w, &MainWindow::addBattery);
 
 	//kick off agent process
 	if (strCompare(type, "wind")) {
-		int index = windCount-1;
+		int index = windCount++;
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		windGeneration(tableName, index, w, agentUI);
 	}
 
 	else if (strCompare(type, "solar")) {
-		int index = solarCount-1;
+		int index = solarCount++;
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		solarGeneration(tableName, index, w, agentUI);
 	}
 
 	else if (strCompare(type, "consumer")) {
-		int index = consumerCount-1;
+		int index = consumerCount++;
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		powerConsumption(tableName, index, w, agentUI);
 	}
 
-	else if (strCompare(type, "regular battery")) {
-		int index = consumerCount-1;
+	else if (strCompare(type, "regular battery") || strCompare(type, "smart battery")) {
+		int index = consumerCount++;
+		agentUI.newBattery(index);
 		countMutex.unlock();
-		regularBattery(tableName, type, w, agentUI);
-	}
 
-	else if (strCompare(type, "smart battery")) {
-		int index = consumerCount - 1;
-		countMutex.unlock();
-		smartBattery(tableName, type, w, agentUI);
+		if (strCompare(type, "regular battery")) {
+			regularBattery(tableName, index, w, agentUI);
+		}
+		else {
+			smartBattery(tableName, index, w, agentUI);
+		}
 	}
 
 	else { //no case, unlock mutex and do no thread actions
@@ -403,6 +397,14 @@ void AgentUI::newAgent(std::string name, std::string type, double power, int ind
 	emit addAgentToUI(QString::fromStdString(name), QString::fromStdString(type), power, index);
 }
 
+void AgentUI::newBattery(int index) {
+	emit addBatteryToUI(index);
+}
+
 void AgentUI::setPower(std::string type, int index, double power) {
 	emit powerChanged(QString::fromStdString(type), index, power);
+}
+
+void AgentUI::updateBattery(int index, double power, double capacity) {
+	emit batteryChanged(index, power, capacity);
 }

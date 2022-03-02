@@ -29,18 +29,19 @@ void MainWindow::showGraph() {
 	w->show();
 }
 
+//add agent display information to UI
 void MainWindow::addWidget(QString name, QString type, double power, int index) {
-	//QGridLayout* layout = qobject_cast<QGridLayout*>(ui->agents->layout());
-	QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(ui->agents->layout());
+	QGroupBox* agents = ui->agents; //pointer to agents group box for brevity
+	QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(agents->layout());
 
 	//add agent to widget
-	QHBoxLayout* agent = new QHBoxLayout(ui->agents);
-	QLabel* nameLabel = new QLabel(name, ui->agents);
+	QHBoxLayout* agent = new QHBoxLayout(agents);
+	QLabel* nameLabel = new QLabel(name, agents);
 	agent->addWidget(nameLabel);
-	QLabel* typeLabel = new QLabel(type, ui->agents);
+	QLabel* typeLabel = new QLabel(type, agents);
 	agent->addWidget(typeLabel);
 	QString powerString = QString::number(power);
-	QLabel* powerLabel = new QLabel(powerString, ui->agents);
+	QLabel* powerLabel = new QLabel(powerString, agents);
 	QString objectName = type + QString::number(index);
 	powerLabel->setObjectName(objectName);
 	agent->addWidget(powerLabel);
@@ -49,12 +50,36 @@ void MainWindow::addWidget(QString name, QString type, double power, int index) 
 	//layout->addWidget(button, 0,0);
 }
 
+//add battery display information to UI
+void MainWindow::addBattery(int index) {
+	QGroupBox* batteries = ui->batteries; //pointer to batteries group box for brevity
+	QHBoxLayout* layout = qobject_cast<QHBoxLayout*>(batteries->layout());
+
+	//add battery to widget
+	QProgressBar* batteryChargeBar = new QProgressBar(batteries);
+	QString objectName = "battery" + QString::number(index);
+	batteryChargeBar->setObjectName(objectName);
+	batteryChargeBar->setValue(0); //initialize to 0%
+
+	layout->insertWidget(layout->count()-1, batteryChargeBar);
+}
+
+//update agent display information
 void MainWindow::changePower(QString type, int index, double power) {
 	QString objectName = type + QString::number(index);
 	QLabel* powerLabel = ui->agents->findChild<QLabel*>(objectName);
 	QString powerString = QString::number(power);
 	if(powerLabel) { //not null
 		powerLabel->setText(powerString);
+	}
+}
+
+//update battery display information
+void MainWindow::updateBattery(int index, double power, double capacity) {
+	QString objectName = "battery" + QString::number(index);
+	QProgressBar* batteryChargeBar = ui->batteries->findChild<QProgressBar*>(objectName);
+	if (batteryChargeBar) { //not null
+		batteryChargeBar->setValue((int)((power / capacity) * 100.0));
 	}
 }
 

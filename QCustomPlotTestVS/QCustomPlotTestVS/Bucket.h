@@ -22,6 +22,7 @@ extern std::vector<double> totalPowerConsumption;
 
 //alias for timetable datatype
 using Timetable = std::unordered_map<int, double>;
+using Battery = std::unordered_map<std::string, double>;
 
 class AgentUI : public QObject {
 	Q_OBJECT
@@ -30,11 +31,15 @@ public:
 	AgentUI(QObject* parent = Q_NULLPTR) {};
 	~AgentUI() {};
 	void newAgent(std::string name, std::string type, double power, int index);
+	void newBattery(int index);
 	void setPower(std::string type, int index, double power);
+	void updateBattery(int index, double power, double capacity);
 
 signals:
 	void addAgentToUI(QString name, QString type, double power, int index);
+	void addBatteryToUI(int index);
 	void powerChanged(QString type, int index, double power);
+	void batteryChanged(int index, double power, double capacity);
 	void timeChanged();
 };
 
