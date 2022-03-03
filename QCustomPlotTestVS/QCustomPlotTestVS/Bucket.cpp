@@ -27,12 +27,13 @@ double batteryCapacity = 50000;
 int windCount = 0;
 int solarCount = 0;
 int consumerCount = 0;
-//int batteryCount = 0;
+int smartBatteryCount = 0;
 
 std::mutex totalMutex;
 std::vector<double> totalWindPower;
 std::vector<double> totalSolarPower;
 std::vector<double> totalPowerConsumption;
+std::vector<bool> smartBatteryCommunication;
 
 std::mutex joulesMutex;
 std::mutex countMutex;
@@ -44,21 +45,6 @@ using Vector2D = std::vector<Vector1D>;
 //alias for timetable datatype
 using Timetable = std::unordered_map<int, double>;
 using Battery = std::unordered_map<std::string, double>;
-
-////// GENERATOR SPECS BEGIN //////
-/*std::unordered_map<std::string, double> windTurbine{ //Enercon E-126 EP3 3.5MW Turbine
-	{"ratedPower", 3.5}, //kiloWatts, tied to k => turbine specs divided by 1000, not the real turbine
-	{"ratedWindSpeed", 14},
-	{"cutOut", 30},
-	{"cutIn", 2},
-	{"k", 0.01785714} //constant, update every time you update ratedPower (ratedPower/(ratedWindSpeed*ratedWindSpeed))
-};*/
-
-std::unordered_map<std::string, double> windTurbine{
-	{"bladeLength", 1} //metres
-};
-
-
 
 void Bucket::chargeBattery(double thisJoules) {
 	joulesMutex.lock();
@@ -203,7 +189,7 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 	setVecSize(totalPowerConsumption);
 
 	int lastTick = 0;
-	while (tick<maxTick) {
+	while (tick<maxTick+1) {
 		double powerConsumption = powerTimetable[tick];
 		agentUI.setPower("consumer", index, powerConsumption);
 
@@ -245,25 +231,15 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 
 	double efficiency = 1; //no clue
 	double airDensity = 1.225; //kg/m^3 according to the International Standard Atmosphere (ISA) values—15° C at sea level with dry air
-	double bladeLength = windTurbine["bladeLength"]; //metres
+	double bladeLength = 1; //metres
 	double generatorArea = M_PI * bladeLength * bladeLength; //pi*r^2
 
 	int lastTick = 0;
-	while (tick<maxTick) {
+	while (tick<maxTick+1) {
 		double windSpeed = windTimetable[tick];
 
 		//P = (efficieny * density of air * area of wind generator * windspeed^3)/3
 		double windPower = efficiency * airDensity * generatorArea * windSpeed * windSpeed * windSpeed;
-
-		//calculate power generation from wind speed (generator has cut out and cut in ratings, as well as rated speed, all need to be taken into account)
-		/*
-		if (windSpeed > windTurbine["cutOut"] || windSpeed < windTurbine["cutIn"]) { //if turbine can't turn
-			windPower = 0;
-		} else if (windSpeed > windTurbine["ratedWindSpeed"]) { // power gen caps at ratedPower when ratedWindSpeed is reached
-			windPower = windTurbine["ratedPower"];
-		} else {
-			windPower = windSpeed * windSpeed * windTurbine["k"]; // P = kv^2
-		}*/
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
@@ -294,7 +270,7 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 	setVecSize(totalPowerConsumption);
 
 	int lastTick = 0;
-	while (tick < maxTick) {
+	while (tick < maxTick && batteryPower < battery["Capacity"]) { //stop drawing power when full
 		double power = battery["Power"] * 60; //each action represents 1 minute
 
 		if (tick > lastTick) { //once per agent per tick
@@ -312,10 +288,57 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 }
 
 //smart batteries
-void Bucket::smartBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI) {
+void Bucket::smartBattery(std::string tableName, int consumptionIndex, int smartBatteryIndex, MainWindow& w, AgentUI& agentUI) {
 	//get battery data
 	Battery battery;
 	getBattery(tableName, battery);
+
+	QObject::connect(&agentUI, &AgentUI::batteryChanged, &w, &MainWindow::updateBattery);
+
+	double batteryPower = 0; //current charge
+
+	while (tick < 1) { //wait for tick to increment once before commencing
+		suspendThread(20);
+	}
+
+	setVecSize(totalPowerConsumption);
+
+	//initialise smart battery communication vessel
+	totalMutex.lock();
+	if(smartBatteryCommunication.size() == 0) {
+		smartBatteryCommunication.resize(smartBatteryCount);
+		for (int i = 0; i < smartBatteryCount; i++) {
+			smartBatteryCommunication[i] = false;
+		}
+	}
+	totalMutex.unlock();
+
+	int lastTick = 0;
+	while (tick < maxTick+1 && batteryPower < battery["Capacity"]) {
+		double power = 0;
+
+		//wait until previous battery is full
+		if (smartBatteryIndex == 0) {
+			power = battery["Power"] * 60; //each action represents 1 minute
+		}
+		else if (smartBatteryCommunication[smartBatteryIndex - 1]) {
+			power = battery["Power"] * 60;
+		}
+
+		if (tick > lastTick) { //once per agent per tick
+			lastTick = tick;
+			addPowerToVector(power, totalPowerConsumption, tick - 1);
+		}
+
+		batteryPower = std::min(batteryPower + power, battery["Capacity"]);
+		batteryPower += power; //charge battery
+
+		agentUI.updateBattery(smartBatteryIndex, batteryPower, battery["Capacity"]);
+		chargeBattery(power * -1);
+		suspendThread(waitTime);
+	}
+
+	smartBatteryCommunication[smartBatteryIndex] = true;
 }
 
 
@@ -374,17 +397,19 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 		powerConsumption(tableName, index, w, agentUI);
 	}
 
-	else if (strCompare(type, "regular battery") || strCompare(type, "smart battery")) {
+	else if (strCompare(type, "regular battery")) {
 		int index = consumerCount++;
 		agentUI.newBattery(index);
 		countMutex.unlock();
+		regularBattery(tableName, index, w, agentUI);
+	}
 
-		if (strCompare(type, "regular battery")) {
-			regularBattery(tableName, index, w, agentUI);
-		}
-		else {
-			smartBattery(tableName, index, w, agentUI);
-		}
+	else if (strCompare(type, "smart battery")) {
+		int index = consumerCount++;
+		int smartBatteryIndex = smartBatteryCount++;
+		agentUI.newBattery(index);
+		countMutex.unlock();
+		smartBattery(tableName, index, smartBatteryIndex, w, agentUI);
 	}
 
 	else { //no case, unlock mutex and do no thread actions

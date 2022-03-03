@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+	setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
 	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(showGraph()));
 
 	QInputDialog inputDialog;
@@ -31,7 +32,7 @@ void MainWindow::showGraph() {
 
 //add agent display information to UI
 void MainWindow::addWidget(QString name, QString type, double power, int index) {
-	QGroupBox* agents = ui->agents; //pointer to agents group box for brevity
+	QWidget* agents = ui->agentsScrollContents; //pointer to agents group box for brevity
 	QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(agents->layout());
 
 	//add agent to widget
@@ -52,7 +53,7 @@ void MainWindow::addWidget(QString name, QString type, double power, int index) 
 
 //add battery display information to UI
 void MainWindow::addBattery(int index) {
-	QGroupBox* batteries = ui->batteries; //pointer to batteries group box for brevity
+	QWidget* batteries = ui->batteriesScrollContents; //pointer to batteries group box for brevity
 	QHBoxLayout* layout = qobject_cast<QHBoxLayout*>(batteries->layout());
 
 	//add battery to widget
