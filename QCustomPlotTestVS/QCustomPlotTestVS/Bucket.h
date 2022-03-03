@@ -59,6 +59,6 @@ class Bucket {
 		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void regularBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI);
-		void smartBattery(std::string tableName, int index, MainWindow& w, AgentUI& agentUI);
+		void smartBattery(std::string tableName, int consumptionIndex, int smartBatteryIndex, MainWindow& w, AgentUI& agentUI);
 		void chargeBattery(double intervals);
 };
