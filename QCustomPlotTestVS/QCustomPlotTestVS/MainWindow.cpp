@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "QCustomPlotTestVS.h"
+#include "Instructions.h"
 
 int maxTick = 0;
 
@@ -10,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->setupUi(this);
 	setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
 	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(showGraph()));
+	connect(ui->instructionsButton, SIGNAL(clicked()), this, SLOT(showInstructions()));
 
 	QInputDialog inputDialog;
 	bool ok;
@@ -25,8 +27,12 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::showGraph() {
-	//this->close();
-	QCustomPlotTestVS* w = new QCustomPlotTestVS(this);
+	QCustomPlotTestVS* w = new QCustomPlotTestVS();
+	w->show();
+}
+
+void MainWindow::showInstructions() {
+	Instructions* w = new Instructions();
 	w->show();
 }
 
@@ -85,5 +91,12 @@ void MainWindow::updateBattery(int index, double power, double capacity) {
 }
 
 void MainWindow::updateProgressBar() {
-	ui->progressBar->setValue((int)(((double)(tick-1)/(double)maxTick)*100.0));
+	int progress = (int)(((double)(tick-1) / (double)maxTick) * 100.0);
+	ui->progressBar->setValue(progress);
+
+	//enable graph and data export buttons when simulation completes
+	if (progress == 100) {
+		ui->openGraphButton->setEnabled(true);
+		ui->exportDataButton->setEnabled(true);
+	}
 }

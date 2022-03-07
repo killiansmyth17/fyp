@@ -333,7 +333,7 @@ void Bucket::smartBattery(std::string tableName, int consumptionIndex, int smart
 		batteryPower = std::min(batteryPower + power, battery["Capacity"]);
 		batteryPower += power; //charge battery
 
-		agentUI.updateBattery(smartBatteryIndex, batteryPower, battery["Capacity"]);
+		agentUI.updateBattery(consumptionIndex, batteryPower, battery["Capacity"]);
 		chargeBattery(power * -1);
 		suspendThread(waitTime);
 	}

@@ -95,9 +95,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Instructions.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="sqlite3.c" />
     <QtRcc Include="QCustomPlotTestVS.qrc" />
+    <QtUic Include="Instructions.ui" />
     <QtUic Include="MainWindow.ui" />
     <QtUic Include="QCustomPlotTestVS.ui" />
     <QtMoc Include="QCustomPlotTestVS.h" />
@@ -112,6 +114,7 @@
   <ItemGroup>
     <QtMoc Include="Bucket.h" />
     <QtMoc Include="MainWindow.h" />
+    <QtMoc Include="Instructions.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="sqlite3.h" />
   </ItemGroup>
