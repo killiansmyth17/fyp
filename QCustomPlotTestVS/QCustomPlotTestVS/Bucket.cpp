@@ -170,9 +170,11 @@ void Bucket::setVecSize(std::vector<double> &totalVector) {
 
 //Add power for one agent to total per tick for plotting purposes, in a function because of mutex lock
 void Bucket::addPowerToVector(double power, std::vector<double> &totalVector, int index) {
-	totalMutex.lock();
-	totalVector[index] += power;
-	totalMutex.unlock();
+	if (index < maxTick) { //guard against straggling agents
+		totalMutex.lock();
+		totalVector[index] += power;
+		totalMutex.unlock();
+	}
 }
 
 //power consumption data stored as watts
