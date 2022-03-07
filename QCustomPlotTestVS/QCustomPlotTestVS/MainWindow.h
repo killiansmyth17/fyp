@@ -18,6 +18,7 @@ private:
 
 private slots:
 	void showGraph();
+	void showInstructions();
 
 public slots:
 	void addWidget(QString name, QString type, double power, int index);

@@ -16,10 +16,9 @@ std::vector<std::thread> threads;
 //callback function for sqlite query, processes SQL data line by line (one line passed into this function at a time)
 static int processAgent(void* arg, int argc, char** argv, char** colName) {
 
-	int i;
 	//populate headers map ONCE for robust indexing of data with column headers (first line will be headers)
 	if (!(headers["Count"])) {
-		for (i = 0; i < argc; i++) {
+		for (int i = 0; i < argc; i++) {
 			std::string index(colName[i]);
 			headers[index] = i;
 		}
@@ -27,7 +26,7 @@ static int processAgent(void* arg, int argc, char** argv, char** colName) {
 
 	//convert argv from nested char pointers to vector of strings for robustness
 	std::vector<std::string> data;
-	for (i = 0; i < argc; i++) {
+	for (int i = 0; i < argc; i++) {
 		data.push_back(argv[i]);
 	}
 
