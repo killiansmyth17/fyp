@@ -213,12 +213,26 @@ void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, Ag
 
 	setVecSize(totalSolarPower);
 
+	double length = 1;
+	double width = 1;
+	double efficiency = 0.2;
+
 	int lastTick = 0;
 	while (true) {
 		double solarGeneration = solarTimetable[tick];
 
-		double solarPower = 0; //TODO
+		//P = efficiency * solar flux * area of solar panel
+		double solarPower = efficiency * solarTimetable[tick] * length * width;
+
+		if (tick > lastTick) { //once per agent per tick
+			lastTick = tick;
+			addPowerToVector(solarPower, totalSolarPower, tick - 1);
+		}
+
 		agentUI.setPower("solar", index, solarPower);
+		
+		chargeBattery(solarPower * 60);
+		suspendThread(waitTime);
 	}
 }
 
