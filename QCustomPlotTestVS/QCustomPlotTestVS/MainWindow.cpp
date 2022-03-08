@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
 	bool ok;
 	maxTick = inputDialog.getInt(0, "Input dialog", "Time to run:", 0, 0, 10000, 1, &ok);
 	if (!ok) {
-		abort();
+		exit(0);
 	}
 }
 
