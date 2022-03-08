@@ -1,3 +1,4 @@
+#include <Windows.h>
 #include "MainWindow.h"
 #include "QCustomPlotTestVS.h"
 #include "Instructions.h"
@@ -9,10 +10,15 @@ MainWindow::MainWindow(QWidget *parent)
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
-	setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
+	setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint); //fix main window size
+
+	//connect event handlers for buttons
 	connect(ui->openGraphButton, SIGNAL(clicked()), this, SLOT(showGraph()));
 	connect(ui->instructionsButton, SIGNAL(clicked()), this, SLOT(showInstructions()));
+	connect(ui->launchDBBrowserButton, SIGNAL(clicked()), this, SLOT(openDBBrowser()));
+	connect(ui->exportDataButton, SIGNAL(clicked()), this, SLOT(exportData()));
 
+	//startup dialog to input maxTicks
 	QInputDialog inputDialog;
 	bool ok;
 	maxTick = inputDialog.getInt(0, "Input dialog", "Time to run:", 0, 0, 10000, 1, &ok);
@@ -34,6 +40,16 @@ void MainWindow::showGraph() {
 void MainWindow::showInstructions() {
 	Instructions* w = new Instructions();
 	w->show();
+}
+
+void MainWindow::openDBBrowser() {
+	//relative path 
+	QString path = QCoreApplication::instance()->applicationDirPath() + "/../../QCustomPlotTestVS/DB Browser (SQLite).lnk";
+	QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode));
+}
+
+void MainWindow::exportData() {
+
 }
 
 //add agent display information to UI

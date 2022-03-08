@@ -19,6 +19,8 @@ private:
 private slots:
 	void showGraph();
 	void showInstructions();
+	void openDBBrowser();
+	void exportData();
 
 public slots:
 	void addWidget(QString name, QString type, double power, int index);
