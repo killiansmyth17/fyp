@@ -114,7 +114,7 @@ void MainWindow::exportData() {
 		outfile << std::endl << "Power deficit?, Yes" << std::endl;
 		outfile << "Tick, Wind Power (W), Solar Power (W), Power Generation (W), Power Consumption (W), Power Surplus (W)" << std::endl;
 		outfile << powerDeficit+1 << ", " << totalWindPower[powerDeficit] << ", " << totalSolarPower[powerDeficit] << ", " << totalPowerGeneration[powerDeficit] << ", " << totalPowerConsumption[powerDeficit] << ", " << powerSurplus[powerDeficit] << std::endl;
-		outfile << std::endl << "Tick, Wind Energy (J), Solar Energy (J), Energy Generation (J), Energy Consumption (J), Energy Surplus (J)" << std::endl;
+		outfile << "Tick, Wind Energy (J), Solar Energy (J), Energy Generation (J), Energy Consumption (J), Energy Surplus (J)" << std::endl;
 		outfile << powerDeficit+1 << ", " << totalWindEnergy[powerDeficit] << ", " << totalSolarEnergy[powerDeficit] << ", " << totalEnergyGeneration[powerDeficit] << ", " << totalEnergyConsumption[powerDeficit] << ", " << energySurplus[powerDeficit] << std::endl;
 
 	}
