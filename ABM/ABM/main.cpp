@@ -6,7 +6,7 @@
 #include "Bucket.h"
 #include "sqlite3.h"
 
-#include "QCustomPlotTestVS.h"
+#include "Graph.h"
 #include "MainWindow.h"
 #include <QtWidgets/QApplication>
 
