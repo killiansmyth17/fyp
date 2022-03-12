@@ -16,24 +16,11 @@ public:
 	~QCustomPlotTestVS();
 
 	void plot();
-	//double sumVector(std::vector<double> vec);
-	//void addConsumptionPoint(double x, std::vector<double> vec);
-	//void addWindPoint(double x, std::vector<double> vec);
-	//void addSolarPoint(double x, std::vector<double> vec);
-	//void addGasPoint(double x, std::vector<double> wind, std::vector<double> solar, std::vector<double> consumption);
-	//void setupOrigin();
 
 private:
     Ui::QCustomPlotTestVSClass *ui;
-	QVector<double>points_x, wind_y, solar_y, consumption_y, gas_y;
-	void appendPoints(QVector<double>& y, std::vector<double>& data);
+	QVector<double>points_x, wind_y, solar_y, generation_y, consumption_y;
+	void appendPoints(QVector<double>& y, std::vector<double> data);
+	void appendGenerationPoints(QVector<double>& y, std::vector<double> windData, std::vector<double> solarData);
 	void appendXAxis(QVector<double>& x, int size);
-
-private slots:
-	//void plotPerSecond();
-	//void on_btn_add_clicked();
-	//void horzScrollBarChanged(int value);
-	//void vertScrollBarChanged(int value);
-	//void xAxisChanged(QCPRange range);
-	//void yAxisChanged(QCPRange range);
 };

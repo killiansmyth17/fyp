@@ -1,7 +1,10 @@
+#include <iostream>
+#include <fstream>
 #include <Windows.h>
 #include "MainWindow.h"
 #include "QCustomPlotTestVS.h"
 #include "Instructions.h"
+#include "Bucket.h"
 
 int maxTick = 0;
 
@@ -32,25 +35,72 @@ MainWindow::~MainWindow()
 	delete ui;
 }
 
+
+
+
+
+//open graph window on button press
 void MainWindow::showGraph() {
 	QCustomPlotTestVS* w = new QCustomPlotTestVS();
 	w->show();
 }
 
+//open instructions window on button press
 void MainWindow::showInstructions() {
 	Instructions* w = new Instructions();
 	w->show();
 }
 
+//open DB Browser on button press
 void MainWindow::openDBBrowser() {
 	//relative path 
 	QString path = QCoreApplication::instance()->applicationDirPath() + "/../../QCustomPlotTestVS/DB Browser (SQLite).lnk";
 	QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode));
 }
 
+//create CSV file report on button press
 void MainWindow::exportData() {
+	std::ofstream outfile("Report.csv");
 
+
+	//create & populate vectors for power generation and surplus
+	std::vector<double> totalPowerGeneration;
+	std::vector<double> powerSurplus;
+	std::vector<double> totalEnergyGeneration;
+	std::vector<double> energySurplus;
+
+	for (int i = 0; i < maxTick; i++) {
+		totalPowerGeneration.push_back(totalWindPower[i] + totalSolarPower[i]);
+		powerSurplus.push_back(totalPowerGeneration[i] - totalPowerConsumption[i]);
+		totalEnergyGeneration.push_back(totalWindEnergy[i] + totalSolarEnergy[i]);
+		energySurplus.push_back(totalEnergyGeneration[i] - totalEnergyConsumption[i]);
+	}
+
+
+	//generate headers row for total power for each tick
+	outfile << "Tick, Wind Power (W), Solar Power (W), Power Generation (W), Power Consumption (W), Power Surplus (W)" << std::endl;
+
+	//populate power data
+	for (int i = 0; i < maxTick; i++) {
+		outfile << i + 1 << ", " << totalWindPower[i] << ", " << totalSolarPower[i] << ", " << totalPowerGeneration[i] << ", " << totalPowerConsumption[i] << ", " << powerSurplus[i] << std::endl;
+	}
+
+	//generate headers row for total energy generated/consumed in each tick
+	outfile << std::endl << "Tick, Wind Energy (J), Solar Energy (J), Energy Generation (J), Energy Consumption (J), Energy Surplus (J)" << std::endl;
+
+	//populate energy data
+	for (int i = 0; i < maxTick; i++) {
+		outfile << i + 1 << ", " << totalWindEnergy[i] << ", " << totalSolarEnergy[i] << ", " << totalEnergyGeneration[i] << ", " << totalEnergyConsumption[i] << ", " << energySurplus[i] << std::endl;
+	}
+
+
+	//write changes to file
+	outfile.close();
 }
+
+
+
+
 
 //add agent display information to UI
 void MainWindow::addWidget(QString name, QString type, double power, int index) {
@@ -69,8 +119,8 @@ void MainWindow::addWidget(QString name, QString type, double power, int index) 
 	powerLabel->setObjectName(objectName);
 	agent->addWidget(powerLabel);
 
+	//add widget to window
 	layout->insertLayout(layout->count()-1, agent);
-	//layout->addWidget(button, 0,0);
 }
 
 //add battery display information to UI
@@ -84,6 +134,7 @@ void MainWindow::addBattery(int index) {
 	batteryChargeBar->setObjectName(objectName);
 	batteryChargeBar->setValue(0); //initialize to 0%
 
+	//add widget to window
 	layout->insertWidget(layout->count()-1, batteryChargeBar);
 }
 
@@ -106,6 +157,7 @@ void MainWindow::updateBattery(int index, double power, double capacity) {
 	}
 }
 
+//update simulation progress bar
 void MainWindow::updateProgressBar() {
 	int progress = (int)(((double)(tick-1) / (double)maxTick) * 100.0);
 	ui->progressBar->setValue(progress);
