@@ -246,3 +246,6 @@ paket-files/
 
 #shortcuts
 *.lnk
+
+#data
+*.csv

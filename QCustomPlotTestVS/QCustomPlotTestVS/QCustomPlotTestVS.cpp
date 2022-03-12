@@ -38,15 +38,27 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 
 	appendPoints(solar_y, totalSolarPower);
 
-	//Power consumption plot setup
+	//Power generation plot setup
 	ui->plot->addGraph();
 	ui->plot->graph(2)->setScatterStyle(QCPScatterStyle::ssCircle);
 	ui->plot->graph(2)->setLineStyle(QCPGraph::lsLine);
-	ui->plot->graph(2)->setName("Power consumption");
+	ui->plot->graph(2)->setName("Power generation");
+	QPen generationPen;
+	generationPen.setWidth(1);
+	generationPen.setColor(QColor(127, 127, 127));
+	ui->plot->graph(2)->setPen(generationPen);
+
+	appendGenerationPoints(generation_y, totalWindPower, totalSolarPower);
+
+	//Power consumption plot setup
+	ui->plot->addGraph();
+	ui->plot->graph(3)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->plot->graph(3)->setLineStyle(QCPGraph::lsLine);
+	ui->plot->graph(3)->setName("Power consumption");
 	QPen consumptionPen;
 	consumptionPen.setWidth(1);
 	consumptionPen.setColor(QColor(0, 0, 0));
-	ui->plot->graph(2)->setPen(consumptionPen);
+	ui->plot->graph(3)->setPen(consumptionPen);
 
 	appendPoints(consumption_y, totalPowerConsumption);
 
@@ -59,9 +71,16 @@ QCustomPlotTestVS::~QCustomPlotTestVS() {
 }
 
 //general purpose function to add points to plot vector
-void QCustomPlotTestVS::appendPoints(QVector<double> &y, std::vector<double> &data) {
+void QCustomPlotTestVS::appendPoints(QVector<double> &y, std::vector<double> data) {
 	for (int i = 0; i < data.size(); i++) {
 		y.append(data[i]);
+	}
+}
+
+//function to add points to total generation vector
+void QCustomPlotTestVS::appendGenerationPoints(QVector<double>& y, std::vector<double> windData, std::vector<double> solarData) {
+	for (int i = 0; i < windData.size(); i++) {
+		y.append(windData[i] + solarData[i]);
 	}
 }
 
@@ -76,7 +95,8 @@ void QCustomPlotTestVS::plot() {
 	//plot all points for each graph
 	ui->plot->graph(0)->setData(points_x, wind_y);
 	ui->plot->graph(1)->setData(points_x, solar_y);
-	ui->plot->graph(2)->setData(points_x, consumption_y);
+	ui->plot->graph(2)->setData(points_x, generation_y);
+	ui->plot->graph(3)->setData(points_x, consumption_y);
 
 	ui->plot->xAxis->setRange(0, maxTick); //auto-scroll X axis
 	ui->plot->yAxis->rescale(); //scale Y axis automatically after adding each point

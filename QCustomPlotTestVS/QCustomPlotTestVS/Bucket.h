@@ -13,12 +13,14 @@
 
 
 //variables
-extern bool wait;
 extern int tick;
-extern double joules;
 extern std::vector<double> totalWindPower;
 extern std::vector<double> totalSolarPower;
 extern std::vector<double> totalPowerConsumption;
+
+extern std::vector<double> totalWindEnergy;
+extern std::vector<double> totalSolarEnergy;
+extern std::vector<double> totalEnergyConsumption;
 
 //alias for timetable datatype
 using Timetable = std::unordered_map<int, double>;
@@ -54,7 +56,8 @@ class Bucket {
 		int getTimetable(std::string tableName, Timetable &datamap);
 		int getBattery(std::string tableName, Battery& datamap);
 		void setVecSize(std::vector<double>& totalVector);
-		void addPowerToVector(double powerConsumption, std::vector<double>& totalVector, int index);
+		void addEnergyToVector(double energy, std::vector<double>& totalVector, int tick);
+		void addPowerToVector(double power, std::vector<double>& totalVector, int tick);
 		void powerConsumption(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void windGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
 		void solarGeneration(std::string tableName, int index, MainWindow &w, AgentUI &agentUI);
