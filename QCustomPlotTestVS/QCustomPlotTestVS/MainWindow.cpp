@@ -55,7 +55,13 @@ void MainWindow::showInstructions() {
 void MainWindow::openDBBrowser() {
 	//relative path 
 	QString path = QCoreApplication::instance()->applicationDirPath() + "/../../QCustomPlotTestVS/DB Browser (SQLite).lnk";
-	QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode));
+	bool successful = QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode));
+
+	//show error message if unsuccessful
+	if (!successful) {
+		QString errorMessage = "Couldn't open file at path " + path;
+		QMessageBox::information(this, tr("Launch DB Browser Failed"), errorMessage); //message window constructor
+	}
 }
 
 //create CSV file report on button press
