@@ -62,6 +62,10 @@ void Bucket::timer(MainWindow& w) {
 	}
 }
 
+
+
+
+
 //callback function for sqlite3 query, puts data in 2D vector
 static int handleData(void* data, int argc, char** argv, char** colName) {
 	Vector2D* records = static_cast<Vector2D*>(data); //cast void* back to Vector2D*
