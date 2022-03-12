@@ -26,13 +26,13 @@
     <QtRcc Include="QCustomPlotTestVS.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <QtUic Include="QCustomPlotTestVS.ui">
+    <QtUic Include="Graph.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtMoc Include="QCustomPlotTestVS.h">
+    <QtMoc Include="Graph.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <ClCompile Include="QCustomPlotTestVS.cpp">
+    <ClCompile Include="Graph.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

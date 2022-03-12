@@ -12,7 +12,7 @@
 //#include "stdafx.h"
 #include "Bucket.h"
 #include "MainWindow.h"
-#include "QCustomPlotTestVS.h"
+#include "Graph.h"
 #include <QObject>
 
 int tick = 0; //increments 10 times every second, let 10 ticks represent a minute (1 tick = 6 seconds)

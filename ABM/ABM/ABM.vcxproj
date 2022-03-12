@@ -15,6 +15,7 @@
     <Keyword>QtVS_v304</Keyword>
     <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>ABM</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -101,11 +102,11 @@
     <QtRcc Include="QCustomPlotTestVS.qrc" />
     <QtUic Include="Instructions.ui" />
     <QtUic Include="MainWindow.ui" />
-    <QtUic Include="QCustomPlotTestVS.ui" />
-    <QtMoc Include="QCustomPlotTestVS.h" />
+    <QtUic Include="Graph.ui" />
+    <QtMoc Include="Graph.h" />
     <ClCompile Include="..\..\..\..\..\..\QCustomPlot\qcustomplot.cpp" />
     <ClCompile Include="Bucket.cpp" />
-    <ClCompile Include="QCustomPlotTestVS.cpp" />
+    <ClCompile Include="Graph.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>

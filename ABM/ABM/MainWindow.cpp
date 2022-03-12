@@ -2,7 +2,7 @@
 #include <fstream>
 #include <Windows.h>
 #include "MainWindow.h"
-#include "QCustomPlotTestVS.h"
+#include "Graph.h"
 #include "Instructions.h"
 #include "Bucket.h"
 
@@ -41,7 +41,7 @@ MainWindow::~MainWindow()
 
 //open graph window on button press
 void MainWindow::showGraph() {
-	QCustomPlotTestVS* w = new QCustomPlotTestVS();
+	Graph* w = new Graph();
 	w->show();
 }
 
@@ -54,7 +54,7 @@ void MainWindow::showInstructions() {
 //open DB Browser on button press
 void MainWindow::openDBBrowser() {
 	//relative path 
-	QString path = QCoreApplication::instance()->applicationDirPath() + "/../../QCustomPlotTestVS/DB Browser (SQLite).lnk";
+	QString path = QCoreApplication::instance()->applicationDirPath() + "/../../ABM/DB Browser (SQLite).lnk";
 	bool successful = QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode));
 
 	//show error message if unsuccessful

@@ -1,10 +1,10 @@
-#include "QCustomPlotTestVS.h"
-#include "ui_QCustomPlotTestVS.h"
+#include "Graph.h"
+#include "ui_Graph.h"
 #include "Bucket.h"
 
-QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
+Graph::Graph(QWidget *parent)
     : QMainWindow(parent),
-	ui(new Ui::QCustomPlotTestVSClass)
+	ui(new Ui::Graph)
 {
     ui->setupUi(this);
 
@@ -66,32 +66,32 @@ QCustomPlotTestVS::QCustomPlotTestVS(QWidget *parent)
 	plot();
 }
 
-QCustomPlotTestVS::~QCustomPlotTestVS() {
+Graph::~Graph() {
 	delete ui;
 }
 
 //general purpose function to add points to plot vector
-void QCustomPlotTestVS::appendPoints(QVector<double> &y, std::vector<double> data) {
+void Graph::appendPoints(QVector<double> &y, std::vector<double> data) {
 	for (int i = 0; i < data.size(); i++) {
 		y.append(data[i]);
 	}
 }
 
 //function to add points to total generation vector
-void QCustomPlotTestVS::appendGenerationPoints(QVector<double>& y, std::vector<double> windData, std::vector<double> solarData) {
+void Graph::appendGenerationPoints(QVector<double>& y, std::vector<double> windData, std::vector<double> solarData) {
 	for (int i = 0; i < windData.size(); i++) {
 		y.append(windData[i] + solarData[i]);
 	}
 }
 
 //create x axis data points
-void QCustomPlotTestVS::appendXAxis(QVector<double> &x, int size) {
+void Graph::appendXAxis(QVector<double> &x, int size) {
 	for (int i = 0; i < size; i++) {
 		x.append(i);
 	}
 }
 
-void QCustomPlotTestVS::plot() {
+void Graph::plot() {
 	//plot all points for each graph
 	ui->plot->graph(0)->setData(points_x, wind_y);
 	ui->plot->graph(1)->setData(points_x, solar_y);
