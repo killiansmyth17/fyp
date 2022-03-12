@@ -78,29 +78,35 @@ static int handleData(void* data, int argc, char** argv, char** colName) {
 	return 0;
 }
 
-//get power data for agent, timetable passed by reference
-int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
-
+//put entire [tableName] table into &data from database
+int connectToDB(std::string tableName, Vector2D &data) {
 	//Create database connection
 	sqlite3* db; //database connection
-	int rc; //return code 
+	int rc; //return code
 	char* zErrMsg = 0;
 
 	rc = sqlite3_open("Agents.db", &db);
 	if (rc) {
-		 std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
-		 sqlite3_close(db);
+		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+		sqlite3_close(db);
 	}
 
-	Vector2D data;
-	std::string query ("SELECT * FROM \""+tableName+"\"");
+	std::string query("SELECT * FROM \"" + tableName + "\"");
 	rc = sqlite3_exec(db, query.c_str(), handleData, &data, &zErrMsg); //execute query with callback function to handle data passed as pointer
 	if (rc != SQLITE_OK) {
-		 std::cerr << "SQL error: " << zErrMsg << std::endl;
-		 sqlite3_free(zErrMsg);
+		std::cerr << "SQL error: " << zErrMsg << std::endl;
+		sqlite3_free(zErrMsg);
 	}
 
 	sqlite3_close(db); //close db connection
+	return 0;
+}
+
+//get power data for agent, timetable passed by reference
+int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
+
+	Vector2D data;
+	connectToDB(tableName, data);
 
 	//map time as index to data (power) as double -> power consumption at time x = y
 	for (int i = 1; i < data.size(); i++) { //skip 0 index because no need for headers
@@ -113,29 +119,11 @@ int Bucket::getTimetable(std::string tableName, Timetable &datamap) {
 
 //get capacity and charging rate data for battery
 int Bucket::getBattery(std::string tableName, Battery& datamap) {
-	//Create database connection
-	sqlite3* db; //database connection
-	int rc; //return code 
-	char* zErrMsg = 0;
-
-	rc = sqlite3_open("Agents.db", &db);
-	if (rc) {
-		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
-		sqlite3_close(db);
-	}
-
+	
 	Vector2D data;
-	std::string query("SELECT * FROM \"" + tableName + "\"");
-	rc = sqlite3_exec(db, query.c_str(), handleData, &data, &zErrMsg); //execute query with callback function to handle data passed as pointer
-	if (rc != SQLITE_OK) {
-		std::cerr << "SQL error: " << zErrMsg << std::endl;
-		sqlite3_free(zErrMsg);
-	}
-
-	sqlite3_close(db); //close db connection
+	connectToDB(tableName, data);
 
 	//map time as index to data (power) as double -> power consumption at time x = y
-	
 	std::vector<std::string> headers;
 	for (int i = 0; i < data[0].size(); i++) {
 		headers.push_back(data[0][i]);
