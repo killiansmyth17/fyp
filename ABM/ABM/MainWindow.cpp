@@ -69,17 +69,27 @@ void MainWindow::exportData() {
 	std::ofstream outfile("Report.csv");
 
 
+
 	//create & populate vectors for power generation and surplus
 	std::vector<double> totalPowerGeneration;
 	std::vector<double> powerSurplus;
 	std::vector<double> totalEnergyGeneration;
 	std::vector<double> energySurplus;
 
+	bool deficit = false;
+	int powerDeficit = 0; //track index of first power deficit occurrence, if one exists
+
 	for (int i = 0; i < maxTick; i++) {
 		totalPowerGeneration.push_back(totalWindPower[i] + totalSolarPower[i]);
 		powerSurplus.push_back(totalPowerGeneration[i] - totalPowerConsumption[i]);
 		totalEnergyGeneration.push_back(totalWindEnergy[i] + totalSolarEnergy[i]);
 		energySurplus.push_back(totalEnergyGeneration[i] - totalEnergyConsumption[i]);
+
+		//check for & track power deficit
+		if (!deficit && powerSurplus[i] < 0) {
+			deficit = true;
+			powerDeficit = i;
+		}
 	}
 
 
@@ -99,6 +109,18 @@ void MainWindow::exportData() {
 		outfile << i + 1 << ", " << totalWindEnergy[i] << ", " << totalSolarEnergy[i] << ", " << totalEnergyGeneration[i] << ", " << totalEnergyConsumption[i] << ", " << energySurplus[i] << std::endl;
 	}
 
+	//if there was a power deficit, log time and data of first occurrence
+	if (deficit) {
+		outfile << std::endl << "Power deficit?, Yes" << std::endl;
+		outfile << "Tick, Wind Power (W), Solar Power (W), Power Generation (W), Power Consumption (W), Power Surplus (W)" << std::endl;
+		outfile << powerDeficit+1 << ", " << totalWindPower[powerDeficit] << ", " << totalSolarPower[powerDeficit] << ", " << totalPowerGeneration[powerDeficit] << ", " << totalPowerConsumption[powerDeficit] << ", " << powerSurplus[powerDeficit] << std::endl;
+		outfile << std::endl << "Tick, Wind Energy (J), Solar Energy (J), Energy Generation (J), Energy Consumption (J), Energy Surplus (J)" << std::endl;
+		outfile << powerDeficit+1 << ", " << totalWindEnergy[powerDeficit] << ", " << totalSolarEnergy[powerDeficit] << ", " << totalEnergyGeneration[powerDeficit] << ", " << totalEnergyConsumption[powerDeficit] << ", " << energySurplus[powerDeficit] << std::endl;
+
+	}
+	else {
+		outfile << std::endl << "Power deficit?, No" << std::endl;
+	}
 
 	//write changes to file
 	outfile.close();
