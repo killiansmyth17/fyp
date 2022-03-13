@@ -49,7 +49,7 @@ signals:
 class Bucket {
 
 	public:
-		void megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data);
+		void megaThread(MainWindow& w, std::string tableName, std::string type);
 		void timer(MainWindow &w);
 
 	private:
