@@ -1,6 +1,5 @@
 // Blank_VS2010.cpp : main project file.
 #include <vector>
-#include <unordered_map>
 #include <string> //needed for map as nested character pointers suck
 
 #include "Bucket.h"
@@ -10,29 +9,27 @@
 #include "MainWindow.h"
 #include <QtWidgets/QApplication>
 
-std::unordered_map<std::string, int> headers;
 std::vector<std::thread> threads;
 
-//callback function for sqlite query, processes SQL data line by line (one line passed into this function at a time)
-static int processAgent(void* arg, int argc, char** argv, char** colName) {
+//callback function for sqlite query, processes SQL data row by row (one row passed into this function at a time)
+static int processAgent(void* arg, int argc, char** argv, char** colName) {	
+	
+	std::string tableName;
+	std::string type;
 
-	//populate headers map ONCE for robust indexing of data with column headers (first line will be headers)
-	if (!(headers["Count"])) {
-		for (int i = 0; i < argc; i++) {
-			std::string index(colName[i]);
-			headers[index] = i;
-		}
+	//check column name so order in db doesn't matter
+	if (!strcmp(colName[0], "Name")) {
+		tableName = argv[0];
+		type = argv[1];
 	}
-
-	//convert argv from nested char pointers to vector of strings for robustness
-	std::vector<std::string> data;
-	for (int i = 0; i < argc; i++) {
-		data.push_back(argv[i]);
+	else {
+		tableName = argv[1];
+		type = argv[0];
 	}
 
 	//make thread
-	MainWindow* w = (MainWindow *)arg;
-	threads.push_back(std::thread(&Bucket::megaThread, Bucket(), std::ref(*w), headers, data));
+	MainWindow* w = (MainWindow *)arg; //cast arg back to MainWindow pointer
+	threads.push_back(std::thread(&Bucket::megaThread, Bucket(), std::ref(*w), tableName, type));
 
 	return 0;
 }
@@ -50,7 +47,7 @@ int createThreads(MainWindow &w) {
 		return 1;
 	}
 
-	const char* sql = "SELECT * FROM \"Agents\"";
+	const char* sql = "SELECT Name, Type FROM \"Agents\"";
 	rc = sqlite3_exec(db, sql, processAgent, &w, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error: " << zErrMsg << std::endl;

@@ -374,18 +374,6 @@ void Bucket::smartBattery(std::string tableName, int consumptionIndex, int smart
 
 
 
-int data_stoi(std::unordered_map<std::string, int> headers, std::vector<std::string> data, std::string query) {
-	return stoi(data[headers[query]]);
-}
-
-//get data from query using column name for the current row
-std::string data_string(std::unordered_map<std::string, int> headers, std::vector<std::string> data, std::string query) {
-	return data[headers[query]]; //headers stores index of each header, data obtained using this index
-}
-
-boolean strCompare(std::string str, std::string comp) {
-	return str.compare(comp) == 0;
-}
 
 void waitForUserInput() {
 	while (maxTick==0) {
@@ -394,11 +382,7 @@ void waitForUserInput() {
 }
 
 //Main thread function that represents agents
-void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> headers, std::vector<std::string> data) {
-
-	//get the agent type
-	std::string tableName = data_string(headers, data, "Name");
-	std::string type = data_string(headers, data, "Type");
+void Bucket::megaThread(MainWindow &w, std::string tableName, std::string type) {
 
 	countMutex.lock(); //need to lock code segment until thread is assigned index
 
@@ -407,35 +391,35 @@ void Bucket::megaThread(MainWindow &w, std::unordered_map<std::string, int> head
 	QObject::connect(&agentUI, &AgentUI::addBatteryToUI, &w, &MainWindow::addBattery);
 
 	//kick off agent process
-	if (strCompare(type, "wind")) {
+	if (type == "wind") {
 		int index = windCount++;
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		windGeneration(tableName, index, w, agentUI);
 	}
 
-	else if (strCompare(type, "solar")) {
+	else if (type == "solar") {
 		int index = solarCount++;
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		solarGeneration(tableName, index, w, agentUI);
 	}
 
-	else if (strCompare(type, "consumer")) {
+	else if (type == "consumer") {
 		int index = consumerCount++;
 		agentUI.newAgent(tableName, type, 0, index);
 		countMutex.unlock();
 		powerConsumption(tableName, index, w, agentUI);
 	}
 
-	else if (strCompare(type, "regular battery")) {
+	else if (type == "regular battery") {
 		int index = consumerCount++;
 		agentUI.newBattery(index);
 		countMutex.unlock();
 		regularBattery(tableName, index, w, agentUI);
 	}
 
-	else if (strCompare(type, "smart battery")) {
+	else if (type == "smart battery") {
 		int index = consumerCount++;
 		int smartBatteryIndex = smartBatteryCount++;
 		agentUI.newBattery(index);
