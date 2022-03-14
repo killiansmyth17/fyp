@@ -69,9 +69,18 @@ int main(int argc, char *argv[])
 
 	// Set up timer thread last, kicks off whole process
 	std::thread timeThread(&Bucket::timer, Bucket(), std::ref(w));
-	timeThread.detach();
 
 	w.show();
 
-    return a.exec();
+    int ret = a.exec(); //Qt Application main event loop
+
+	tick = maxTick+1; //forcefully mark simulation as complete (forces threads to stop looping)
+
+	//confirm all threads have terminated
+	for (int i = 0; i < threads.size(); i++) {
+		threads[i].join();
+	}
+	timeThread.join();
+
+	return ret;
 }

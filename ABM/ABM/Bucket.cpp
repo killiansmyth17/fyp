@@ -192,7 +192,7 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 	setVecSize(totalEnergyConsumption);
 
 	int lastTick = 0;
-	while (tick<maxTick+1) {
+	while (tick<=maxTick) {
 		double powerConsumption = powerTimetable[tick];
 		agentUI.setPower("consumer", index, powerConsumption);
 
@@ -224,7 +224,7 @@ void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, Ag
 	double efficiency = 0.2;
 
 	int lastTick = 0;
-	while (true) {
+	while (tick<=maxTick) {
 		double solarGeneration = solarTimetable[tick];
 
 		//P = efficiency * solar flux * area of solar panel
@@ -262,7 +262,7 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 	double generatorArea = M_PI * bladeLength * bladeLength; //pi*r^2
 
 	int lastTick = 0;
-	while (tick<maxTick+1) {
+	while (tick<=maxTick) {
 		double windSpeed = windTimetable[tick];
 
 		//P = (efficieny * density of air * area of wind generator * windspeed^3)/3
@@ -298,7 +298,7 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 	setVecSize(totalEnergyConsumption);
 
 	int lastTick = 0;
-	while (tick < maxTick && batteryEnergy < battery["Capacity"]) { //stop drawing power when full
+	while (tick <= maxTick && batteryEnergy < battery["Capacity"]) { //stop drawing power when full
 		double power = battery["Power"];
 		double energy = power * 60; //each agent action represents 1 minute
 
@@ -343,7 +343,7 @@ void Bucket::smartBattery(std::string tableName, int consumptionIndex, int smart
 	totalMutex.unlock();
 
 	int lastTick = 0;
-	while (tick < maxTick+1 && batteryEnergy < battery["Capacity"]) {
+	while (tick <= maxTick && batteryEnergy < battery["Capacity"]) {
 		double power = 0;
 
 		//wait until previous battery is full
