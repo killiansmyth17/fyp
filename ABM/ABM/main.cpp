@@ -47,8 +47,8 @@ int createThreads(MainWindow &w) {
 		return 1;
 	}
 
-	const char* sql = "SELECT Name, Type FROM \"Agents\"";
-	rc = sqlite3_exec(db, sql, processAgent, &w, &zErrMsg);
+	std::string sql = "SELECT Name, Type FROM \"Agents\"";
+	rc = sqlite3_exec(db, sql.c_str(), processAgent, &w, &zErrMsg);
 	if (rc != SQLITE_OK) {
 		std::cerr << "SQL error: " << zErrMsg << std::endl;
 		sqlite3_free(zErrMsg);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	if (rc) return 1;
 
 	// Set up timer thread last, kicks off whole process
-	std::thread timeThread(&Bucket::timer, Bucket(), std::ref(w));
+	threads.push_back(std::thread(&Bucket::timer, Bucket(), std::ref(w)));
 
 	w.show();
 
@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < threads.size(); i++) {
 		threads[i].join();
 	}
-	timeThread.join();
 
 	return ret;
 }
