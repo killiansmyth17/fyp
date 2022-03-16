@@ -64,6 +64,10 @@ void MainWindow::openDBBrowser() {
 	}
 }
 
+
+
+
+
 //create CSV file report on button press
 void MainWindow::exportData() {
 	std::ofstream outfile("Report.csv");
@@ -72,8 +76,10 @@ void MainWindow::exportData() {
 
 	//create & populate vectors for power generation and surplus
 	std::vector<double> totalPowerGeneration;
+	std::vector<double> totalPowerConsumption;
 	std::vector<double> powerSurplus;
 	std::vector<double> totalEnergyGeneration;
+	std::vector<double> totalEnergyConsumption;
 	std::vector<double> energySurplus;
 
 	bool deficit = false;
@@ -81,8 +87,10 @@ void MainWindow::exportData() {
 
 	for (int i = 0; i < maxTick; i++) {
 		totalPowerGeneration.push_back(totalWindPower[i] + totalSolarPower[i]);
+		totalPowerConsumption.push_back(consumerPowerConsumption[i] + batteryPowerConsumption[i]);
 		powerSurplus.push_back(totalPowerGeneration[i] - totalPowerConsumption[i]);
 		totalEnergyGeneration.push_back(totalWindEnergy[i] + totalSolarEnergy[i]);
+		totalEnergyConsumption.push_back(consumerEnergyConsumption[i] + batteryEnergyConsumption[i]);
 		energySurplus.push_back(totalEnergyGeneration[i] - totalEnergyConsumption[i]);
 
 		//check for & track power deficit
@@ -94,28 +102,28 @@ void MainWindow::exportData() {
 
 
 	//generate headers row for total power for each tick
-	outfile << "Tick, Wind Power (W), Solar Power (W), Power Generation (W), Power Consumption (W), Power Surplus (W)" << std::endl;
+	outfile << "Tick, Wind Power (W), Solar Power (W), Total Power Generation (W), Consumer Power (W), Battery Power (W), Total Power Consumption (W), Power Surplus (W)" << std::endl;
 
 	//populate power data
 	for (int i = 0; i < maxTick; i++) {
-		outfile << i + 1 << ", " << totalWindPower[i] << ", " << totalSolarPower[i] << ", " << totalPowerGeneration[i] << ", " << totalPowerConsumption[i] << ", " << powerSurplus[i] << std::endl;
+		outfile << i + 1 << ", " << totalWindPower[i] << ", " << totalSolarPower[i] << ", " << totalPowerGeneration[i] << ", " << consumerPowerConsumption[i] << ", " << batteryPowerConsumption[i] << ", " << totalPowerConsumption[i] << ", " << powerSurplus[i] << std::endl;
 	}
 
 	//generate headers row for total energy generated/consumed in each tick
-	outfile << std::endl << "Tick, Wind Energy (J), Solar Energy (J), Energy Generation (J), Energy Consumption (J), Energy Surplus (J)" << std::endl;
+	outfile << std::endl << "Tick, Wind Energy (J), Solar Energy (J), Total Energy Generation (J), Consumer Energy (J), Battery Energy (J), Total Energy Consumption (J), Energy Surplus (J)" << std::endl;
 
 	//populate energy data
 	for (int i = 0; i < maxTick; i++) {
-		outfile << i + 1 << ", " << totalWindEnergy[i] << ", " << totalSolarEnergy[i] << ", " << totalEnergyGeneration[i] << ", " << totalEnergyConsumption[i] << ", " << energySurplus[i] << std::endl;
+		outfile << i + 1 << ", " << totalWindEnergy[i] << ", " << totalSolarEnergy[i] << ", " << totalEnergyGeneration[i] << ", " << consumerEnergyConsumption[i] << ", " << batteryEnergyConsumption[i] << ", " << totalEnergyConsumption[i] << ", " << energySurplus[i] << std::endl;
 	}
 
 	//if there was a power deficit, log time and data of first occurrence
 	if (deficit) {
 		outfile << std::endl << "Power deficit?, Yes" << std::endl;
-		outfile << "Tick, Wind Power (W), Solar Power (W), Power Generation (W), Power Consumption (W), Power Surplus (W)" << std::endl;
-		outfile << powerDeficit+1 << ", " << totalWindPower[powerDeficit] << ", " << totalSolarPower[powerDeficit] << ", " << totalPowerGeneration[powerDeficit] << ", " << totalPowerConsumption[powerDeficit] << ", " << powerSurplus[powerDeficit] << std::endl;
-		outfile << "Tick, Wind Energy (J), Solar Energy (J), Energy Generation (J), Energy Consumption (J), Energy Surplus (J)" << std::endl;
-		outfile << powerDeficit+1 << ", " << totalWindEnergy[powerDeficit] << ", " << totalSolarEnergy[powerDeficit] << ", " << totalEnergyGeneration[powerDeficit] << ", " << totalEnergyConsumption[powerDeficit] << ", " << energySurplus[powerDeficit] << std::endl;
+		outfile << "Tick, Wind Power (W), Solar Power (W), Total Power Generation (W), Consumer Power (W), Battery Power (W), Total Power Consumption (W), Power Surplus (W)" << std::endl;
+		outfile << powerDeficit+1 << ", " << totalWindPower[powerDeficit] << ", " << totalSolarPower[powerDeficit] << ", " << totalPowerGeneration[powerDeficit] << ", " << consumerPowerConsumption[powerDeficit] << ", " << batteryPowerConsumption[powerDeficit] << ", " << totalPowerConsumption[powerDeficit] << ", " << powerSurplus[powerDeficit] << std::endl;
+		outfile << "Tick, Wind Energy (J), Solar Energy (J), Total Energy Generation (J), Consumer Energy (J), Battery Energy (J), Total Energy Consumption (J), Energy Surplus (J)" << std::endl;
+		outfile << powerDeficit+1 << ", " << totalWindEnergy[powerDeficit] << ", " << totalSolarEnergy[powerDeficit] << ", " << totalEnergyGeneration[powerDeficit] << ", " << consumerEnergyConsumption[powerDeficit] << ", " << batteryEnergyConsumption[powerDeficit] << ", " << totalEnergyConsumption[powerDeficit] << ", " << energySurplus[powerDeficit] << std::endl;
 
 	}
 	else {

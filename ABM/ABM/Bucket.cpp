@@ -27,13 +27,15 @@ int smartBatteryCount = 0;
 std::mutex totalMutex;
 std::vector<double> totalWindPower;
 std::vector<double> totalSolarPower;
-std::vector<double> totalPowerConsumption;
+std::vector<double> consumerPowerConsumption;
+std::vector<double> batteryPowerConsumption;
 std::vector<bool> smartBatteryCommunication;
 
 std::mutex joulesMutex;
 std::vector<double> totalWindEnergy;
 std::vector<double> totalSolarEnergy;
-std::vector<double> totalEnergyConsumption;
+std::vector<double> consumerEnergyConsumption;
+std::vector<double> batteryEnergyConsumption;
 
 std::mutex countMutex;
 
@@ -188,8 +190,8 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 		suspendThread(20);
 	}
 	
-	setVecSize(totalPowerConsumption);
-	setVecSize(totalEnergyConsumption);
+	setVecSize(consumerPowerConsumption);
+	setVecSize(consumerEnergyConsumption);
 
 	int lastTick = 0;
 	while (tick<=maxTick) {
@@ -198,10 +200,10 @@ void Bucket::powerConsumption(std::string tableName, int index, MainWindow& w, A
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
-			addPowerToVector(powerConsumption, totalPowerConsumption, tick-1);
+			addPowerToVector(powerConsumption, consumerPowerConsumption, tick-1);
 		}
 
-		addEnergyToVector(powerConsumption*60, totalEnergyConsumption, tick-1); //each action represents 1 minute
+		addEnergyToVector(powerConsumption*60, consumerEnergyConsumption, tick-1); //each action represents 1 minute
 		suspendThread(waitTime);
 	}
 }
@@ -294,8 +296,8 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 		suspendThread(20);
 	}
 
-	setVecSize(totalPowerConsumption);
-	setVecSize(totalEnergyConsumption);
+	setVecSize(batteryPowerConsumption);
+	setVecSize(batteryEnergyConsumption);
 
 	int lastTick = 0;
 	while (tick <= maxTick && batteryEnergy < battery["Capacity"]) { //stop drawing power when full
@@ -304,13 +306,13 @@ void Bucket::regularBattery(std::string tableName, int index, MainWindow& w, Age
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
-			addPowerToVector(power, totalPowerConsumption, tick - 1);
+			addPowerToVector(power, batteryPowerConsumption, tick - 1);
 		}
 
 		batteryEnergy = std::min(batteryEnergy + energy, battery["Capacity"]); //charge battery
 
 		agentUI.updateBattery(index, batteryEnergy, battery["Capacity"]);
-		addEnergyToVector(energy, totalEnergyConsumption, tick-1);
+		addEnergyToVector(energy, batteryEnergyConsumption, tick-1);
 		suspendThread(waitTime);
 	}
 }
@@ -329,8 +331,8 @@ void Bucket::smartBattery(std::string tableName, int consumptionIndex, int smart
 		suspendThread(20);
 	}
 
-	setVecSize(totalPowerConsumption);
-	setVecSize(totalEnergyConsumption);
+	setVecSize(batteryPowerConsumption);
+	setVecSize(batteryEnergyConsumption);
 
 	//initialise smart battery communication vessel
 	totalMutex.lock();
@@ -356,14 +358,14 @@ void Bucket::smartBattery(std::string tableName, int consumptionIndex, int smart
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
-			addPowerToVector(power, totalPowerConsumption, tick - 1);
+			addPowerToVector(power, batteryPowerConsumption, tick - 1);
 		}
 
 		double energy = power * 60; //each action represents 1 minute
 		batteryEnergy = std::min(batteryEnergy + energy, battery["Capacity"]); //charge battery
 
 		agentUI.updateBattery(consumptionIndex, batteryEnergy, battery["Capacity"]);
-		addEnergyToVector(energy, totalEnergyConsumption, tick-1);
+		addEnergyToVector(energy, batteryEnergyConsumption, tick-1);
 		suspendThread(waitTime);
 	}
 

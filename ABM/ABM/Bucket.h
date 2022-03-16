@@ -16,11 +16,13 @@
 extern int tick;
 extern std::vector<double> totalWindPower;
 extern std::vector<double> totalSolarPower;
-extern std::vector<double> totalPowerConsumption;
+extern std::vector<double> consumerPowerConsumption;
+extern std::vector<double> batteryPowerConsumption;
 
 extern std::vector<double> totalWindEnergy;
 extern std::vector<double> totalSolarEnergy;
-extern std::vector<double> totalEnergyConsumption;
+extern std::vector<double> consumerEnergyConsumption;
+extern std::vector<double> batteryEnergyConsumption;
 
 //alias for timetable datatype
 using Timetable = std::unordered_map<int, double>;

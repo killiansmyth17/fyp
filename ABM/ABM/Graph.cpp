@@ -11,12 +11,17 @@ Graph::Graph(QWidget *parent)
 	ui->plot->xAxis->setLabel("Ticks (15 minute segments)");
 	ui->plot->yAxis->setLabel("Power (watts)");
 	ui->plot->legend->setVisible(true);
+	ui->plot->legend->setSelectableParts(QCPLegend::spItems); //limit selection to legend items and not legend box
 
 	appendXAxis(points_x, maxTick);
 
+	//CREATE GENERATOR PLOTS
+	QCPScatterStyle generatorStyle = QCPScatterStyle::ssTriangle;
+	generatorStyle.setSize(10);
+
 	//Wind power plot setup
 	ui->plot->addGraph();
-	ui->plot->graph(0)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->plot->graph(0)->setScatterStyle(generatorStyle);
 	ui->plot->graph(0)->setLineStyle(QCPGraph::lsLine);
 	ui->plot->graph(0)->setName("Wind power");
 	QPen windPen;
@@ -28,7 +33,7 @@ Graph::Graph(QWidget *parent)
 
 	//Solar power plot setup
 	ui->plot->addGraph();
-	ui->plot->graph(1)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->plot->graph(1)->setScatterStyle(generatorStyle);
 	ui->plot->graph(1)->setLineStyle(QCPGraph::lsLine);
 	ui->plot->graph(1)->setName("Solar power");
 	QPen solarPen;
@@ -40,30 +45,70 @@ Graph::Graph(QWidget *parent)
 
 	//Power generation plot setup
 	ui->plot->addGraph();
-	ui->plot->graph(2)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->plot->graph(2)->setScatterStyle(generatorStyle);
 	ui->plot->graph(2)->setLineStyle(QCPGraph::lsLine);
-	ui->plot->graph(2)->setName("Power generation");
+	ui->plot->graph(2)->setName("Total power generation");
 	QPen generationPen;
 	generationPen.setWidth(1);
 	generationPen.setColor(QColor(127, 127, 127));
 	ui->plot->graph(2)->setPen(generationPen);
+	appendTotalPoints(generation_y, totalWindPower, totalSolarPower);
 
-	appendGenerationPoints(generation_y, totalWindPower, totalSolarPower);
+	
+	
+	//CREATE CONSUMER PLOTS
+	QCPScatterStyle consumerStyle = QCPScatterStyle::ssTriangleInverted;
+	consumerStyle.setSize(10);
 
-	//Power consumption plot setup
+	//Consumer power consumption plot setup
 	ui->plot->addGraph();
-	ui->plot->graph(3)->setScatterStyle(QCPScatterStyle::ssCircle);
+	ui->plot->graph(3)->setScatterStyle(consumerStyle);
 	ui->plot->graph(3)->setLineStyle(QCPGraph::lsLine);
-	ui->plot->graph(3)->setName("Power consumption");
+	ui->plot->graph(3)->setName("Consumer power consumption");
+	QPen consumerPen;
+	consumerPen.setWidth(1);
+	consumerPen.setColor(QColor(255, 0, 0));
+	ui->plot->graph(3)->setPen(consumerPen);
+
+	appendPoints(consumer_y, consumerPowerConsumption);
+
+	//Battery power consumption plot setup
+	ui->plot->addGraph();
+	ui->plot->graph(4)->setScatterStyle(consumerStyle);
+	ui->plot->graph(4)->setLineStyle(QCPGraph::lsLine);
+	ui->plot->graph(4)->setName("Battery power consumption");
+	QPen batteryPen;
+	batteryPen.setWidth(1);
+	batteryPen.setColor(QColor(255, 127, 0));
+	ui->plot->graph(4)->setPen(batteryPen);
+
+	appendPoints(battery_y, batteryPowerConsumption);
+
+	//Battery power consumption plot setup
+	ui->plot->addGraph();
+	ui->plot->graph(5)->setScatterStyle(consumerStyle);
+	ui->plot->graph(5)->setLineStyle(QCPGraph::lsLine);
+	ui->plot->graph(5)->setName("Total power consumption");
 	QPen consumptionPen;
 	consumptionPen.setWidth(1);
 	consumptionPen.setColor(QColor(0, 0, 0));
-	ui->plot->graph(3)->setPen(consumptionPen);
+	ui->plot->graph(5)->setPen(consumptionPen);
 
-	appendPoints(consumption_y, totalPowerConsumption);
+	appendTotalPoints(consumption_y, consumerPowerConsumption, batteryPowerConsumption);
 
-	ui->plot->setInteractions(QCP::iSelectLegend); //show which plot you clicked on in the legend
-	plot();
+	ui->plot->setInteractions(QCP::iSelectLegend); //allow selecting plots in legend
+	connect(
+		ui->plot,
+		SIGNAL(legendClick(QCPLegend*, QCPAbstractLegendItem*, QMouseEvent*)),
+		this,
+		SLOT(toggleVisibility(QCPLegend*, QCPAbstractLegendItem*))
+	); //event to toggle visibility when plot in legend double clicked
+
+	plot(); //plot the points in graph
+
+	QTextStream out(stdout);
+	QString x = "Here";
+	out << x;
 }
 
 Graph::~Graph() {
@@ -77,10 +122,10 @@ void Graph::appendPoints(QVector<double> &y, std::vector<double> data) {
 	}
 }
 
-//function to add points to total generation vector
-void Graph::appendGenerationPoints(QVector<double>& y, std::vector<double> windData, std::vector<double> solarData) {
-	for (int i = 0; i < windData.size(); i++) {
-		y.append(windData[i] + solarData[i]);
+//function to total values for total vectors (generation and consumption)
+void Graph::appendTotalPoints(QVector<double>& y, std::vector<double> vector1, std::vector<double> vector2) {
+	for (int i = 0; i < vector1.size(); i++) {
+		y.append(vector1[i] + vector2[i]);
 	}
 }
 
@@ -96,10 +141,30 @@ void Graph::plot() {
 	ui->plot->graph(0)->setData(points_x, wind_y);
 	ui->plot->graph(1)->setData(points_x, solar_y);
 	ui->plot->graph(2)->setData(points_x, generation_y);
-	ui->plot->graph(3)->setData(points_x, consumption_y);
+	ui->plot->graph(3)->setData(points_x, consumer_y);
+	ui->plot->graph(4)->setData(points_x, battery_y);
+	ui->plot->graph(5)->setData(points_x, consumption_y);
 
 	ui->plot->xAxis->setRange(0, maxTick); //auto-scroll X axis
 	ui->plot->yAxis->rescale(); //scale Y axis automatically after adding each point
 	ui->plot->replot();
 	ui->plot->update();
+}
+
+void Graph::toggleVisibility(QCPLegend* legend, QCPAbstractLegendItem* item) {
+	Q_UNUSED(legend); //avoid unused parameter warnings
+
+	if (item) { //only react if item was clicked (could be null if whitespace of legend was clicked)
+		QCPPlottableLegendItem* plItem = qobject_cast<QCPPlottableLegendItem*>(item);
+
+
+		if (plItem->plottable()->visible()) {
+			plItem->plottable()->setVisible(false);
+		}
+		else {
+			plItem->plottable()->setVisible(true);
+		}
+
+		ui->plot->update();
+	}
 }
