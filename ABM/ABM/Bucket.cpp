@@ -260,7 +260,7 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 
 	double efficiency = 1; //no clue
 	double airDensity = 1.225; //kg/m^3 according to the International Standard Atmosphere (ISA) values—15° C at sea level with dry air
-	double bladeLength = 1; //metres
+	double bladeLength = 0.5; //metres
 	double generatorArea = M_PI * bladeLength * bladeLength; //pi*r^2
 
 	int lastTick = 0;
