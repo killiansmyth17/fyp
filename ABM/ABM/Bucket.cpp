@@ -260,15 +260,15 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 
 	double efficiency = 0.25; //turbines are 20% to 40% efficient at converting wind into energy
 	double airDensity = 1.225; //kg/m^3 according to the International Standard Atmosphere (ISA) values—15° C at sea level with dry air
-	double bladeLength = 1; //metres
+	double bladeLength = 1.5; //metres
 	double generatorArea = M_PI * bladeLength * bladeLength; //pi*r^2
 
 	int lastTick = 0;
 	while (tick<=maxTick) {
 		double windSpeed = windTimetable[tick];
 
-		//P = (efficieny * density of air * area of wind generator * windspeed^3)/3
-		double windPower = efficiency * airDensity * generatorArea * windSpeed * windSpeed * windSpeed;
+		//P = (efficieny * density of air * area of wind generator * windspeed^3)/2
+		double windPower = (efficiency * airDensity * generatorArea * windSpeed * windSpeed * windSpeed)/2;
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
