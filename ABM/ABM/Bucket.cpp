@@ -227,10 +227,10 @@ void Bucket::solarGeneration(std::string tableName, int index, MainWindow& w, Ag
 
 	int lastTick = 0;
 	while (tick<=maxTick) {
-		double solarGeneration = solarTimetable[tick];
+		double solarFlux = solarTimetable[tick];
 
 		//P = efficiency * solar flux * area of solar panel
-		double solarPower = efficiency * solarTimetable[tick] * length * width;
+		double solarPower = efficiency * solarFlux * length * width;
 
 		if (tick > lastTick) { //once per agent per tick
 			lastTick = tick;
@@ -258,9 +258,9 @@ void Bucket::windGeneration(std::string tableName, int index, MainWindow& w, Age
 	setVecSize(totalWindPower);
 	setVecSize(totalWindEnergy);
 
-	double efficiency = 1; //no clue
+	double efficiency = 0.25; //turbines are 20% to 40% efficient at converting wind into energy
 	double airDensity = 1.225; //kg/m^3 according to the International Standard Atmosphere (ISA) values—15° C at sea level with dry air
-	double bladeLength = 0.5; //metres
+	double bladeLength = 1; //metres
 	double generatorArea = M_PI * bladeLength * bladeLength; //pi*r^2
 
 	int lastTick = 0;
